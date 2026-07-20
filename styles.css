@@ -1,0 +1,1417 @@
+/* =========================================================
+           1. ОСНОВНЫЕ НАСТРОЙКИ ДИЗАЙНА
+           ========================================================= */
+
+        :root {
+            /* Акцентные цвета одинаковы для светлой и тёмной темы */
+            --blue: #2887ff;
+            --blue-dark: #1364ca;
+            --orange: #ff8a24;
+            --orange-dark: #d86600;
+
+            --green: #2ecb81;
+            --red: #ff5f68;
+            --yellow: #f7c948;
+
+            --radius: 18px;
+        }
+
+        /* Тёмная тема — используется по умолчанию */
+        :root,
+        [data-theme="dark"] {
+            color-scheme: dark;
+
+            --background: #080d16;
+            --background-secondary: #0d1421;
+            --card: #121c2b;
+            --card-light: #182538;
+            --border: #26364d;
+
+            --text: #f4f7fb;
+            --text-muted: #96a6bb;
+            --placeholder: #65758a;
+            --danger-text: #ffb7bb;
+
+            --shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+            --body-glow-blue: rgba(40, 135, 255, 0.13);
+            --body-glow-orange: rgba(255, 138, 36, 0.10);
+            --brand-border: rgba(255, 138, 36, 0.45);
+            --brand-bg: linear-gradient(145deg, rgba(255, 138, 36, 0.22), rgba(40, 135, 255, 0.18));
+            --brand-shadow: 0 12px 30px rgba(255, 138, 36, 0.12);
+            --nav-border-top: rgba(255, 255, 255, 0.04);
+            --nav-border-bottom: rgba(255, 255, 255, 0.06);
+            --nav-bg: rgba(8, 13, 22, 0.86);
+            --card-shine: linear-gradient(145deg, rgba(255, 255, 255, 0.018), transparent);
+            --surface-subtle: rgba(255, 255, 255, 0.018);
+            --table-head-bg: rgba(255, 255, 255, 0.018);
+            --table-row-hover: rgba(40, 135, 255, 0.035);
+            --focus-ring: rgba(40, 135, 255, 0.12);
+            --modal-overlay: rgba(3, 7, 12, 0.78);
+            --modal-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+            --theme-toggle-bg: var(--card-light);
+            --theme-toggle-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
+        }
+
+        /* Светлая тема — включается атрибутом data-theme="light" на html */
+        [data-theme="light"] {
+            color-scheme: light;
+
+            --background: #eef3f9;
+            --background-secondary: #ffffff;
+            --card: #ffffff;
+            --card-light: #f3f7fc;
+            --border: #d4deea;
+
+            --text: #1b2432;
+            --text-muted: #5f7088;
+            --placeholder: #8a99ad;
+            --danger-text: #c42b35;
+
+            --shadow: 0 18px 45px rgba(27, 36, 50, 0.10);
+            --body-glow-blue: rgba(40, 135, 255, 0.12);
+            --body-glow-orange: rgba(255, 138, 36, 0.10);
+            --brand-border: rgba(255, 138, 36, 0.35);
+            --brand-bg: linear-gradient(145deg, rgba(255, 138, 36, 0.16), rgba(40, 135, 255, 0.12));
+            --brand-shadow: 0 12px 30px rgba(40, 135, 255, 0.12);
+            --nav-border-top: rgba(27, 36, 50, 0.06);
+            --nav-border-bottom: rgba(27, 36, 50, 0.08);
+            --nav-bg: rgba(255, 255, 255, 0.88);
+            --card-shine: linear-gradient(145deg, rgba(255, 255, 255, 0.85), transparent);
+            --surface-subtle: rgba(27, 36, 50, 0.03);
+            --table-head-bg: rgba(27, 36, 50, 0.04);
+            --table-row-hover: rgba(40, 135, 255, 0.08);
+            --focus-ring: rgba(40, 135, 255, 0.18);
+            --modal-overlay: rgba(27, 36, 50, 0.45);
+            --modal-shadow: 0 30px 80px rgba(27, 36, 50, 0.18);
+            --theme-toggle-bg: #ffffff;
+            --theme-toggle-shadow: 0 14px 35px rgba(27, 36, 50, 0.16);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Arial,
+                sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, var(--body-glow-blue), transparent 35%),
+                radial-gradient(circle at top right, var(--body-glow-orange), transparent 30%),
+                var(--background);
+            transition:
+                color 0.25s ease,
+                background 0.25s ease;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        .container {
+            width: min(1440px, calc(100% - 32px));
+            margin: 0 auto;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* =========================================================
+           2. ШАПКА
+           ========================================================= */
+
+        .header {
+            padding: 36px 0 24px;
+        }
+
+        .header__content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand__icon {
+            width: 54px;
+            height: 54px;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            border: 1px solid var(--brand-border);
+            border-radius: 16px;
+            background: var(--brand-bg);
+            box-shadow: var(--brand-shadow);
+            font-size: 28px;
+        }
+
+        .brand h1 {
+            margin: 0 0 5px;
+            font-size: clamp(23px, 4vw, 36px);
+            line-height: 1.1;
+        }
+
+        .brand p {
+            margin: 0;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .header__actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* =========================================================
+           3. КНОПКИ
+           ========================================================= */
+
+        .button {
+            min-height: 44px;
+            padding: 10px 16px;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            color: white;
+            background: var(--blue);
+            font-weight: 700;
+            transition:
+                transform 0.18s ease,
+                opacity 0.18s ease,
+                border-color 0.18s ease,
+                background 0.18s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button--primary {
+            background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+            box-shadow: 0 10px 25px rgba(255, 138, 36, 0.18);
+        }
+
+        .button--secondary {
+            border-color: var(--border);
+            color: var(--text);
+            background: var(--card-light);
+        }
+
+        .button--blue {
+            background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+        }
+
+        .button--danger {
+            border-color: rgba(255, 95, 104, 0.35);
+            color: var(--danger-text);
+            background: rgba(255, 95, 104, 0.12);
+        }
+
+        .button--small {
+            min-height: 35px;
+            padding: 7px 10px;
+            border-radius: 9px;
+            font-size: 13px;
+        }
+
+        .icon-button {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            padding: 0;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            background: var(--card-light);
+        }
+
+        .icon-button:hover {
+            border-color: var(--blue);
+        }
+
+        .icon-button--danger:hover {
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        /* =========================================================
+           4. НАВИГАЦИЯ
+           ========================================================= */
+
+        .navigation {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            padding: 10px 0;
+            border-top: 1px solid var(--nav-border-top);
+            border-bottom: 1px solid var(--nav-border-bottom);
+            background: var(--nav-bg);
+            backdrop-filter: blur(16px);
+            transition:
+                background 0.25s ease,
+                border-color 0.25s ease;
+        }
+
+        .navigation__inner {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+
+        .navigation__link {
+            flex-shrink: 0;
+            padding: 9px 13px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .navigation__link:hover {
+            border-color: var(--border);
+            color: var(--text);
+            background: var(--card);
+        }
+
+        /* =========================================================
+           5. ОСНОВНЫЕ СЕКЦИИ
+           ========================================================= */
+
+        main {
+            padding: 26px 0 60px;
+        }
+
+        .section {
+            margin-top: 28px;
+            scroll-margin-top: 80px;
+        }
+
+        .section:first-child {
+            margin-top: 0;
+        }
+
+        .section__header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .section__header h2 {
+            margin: 0 0 5px;
+            font-size: clamp(21px, 3vw, 28px);
+        }
+
+        .section__header p {
+            margin: 0;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background:
+                var(--card-shine),
+                var(--card);
+            box-shadow: var(--shadow);
+            transition:
+                background 0.25s ease,
+                border-color 0.25s ease,
+                box-shadow 0.25s ease;
+        }
+
+        /* =========================================================
+           6. СВОДНЫЕ ПОКАЗАТЕЛИ
+           ========================================================= */
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .summary-card {
+            position: relative;
+            min-height: 145px;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        .summary-card::after {
+            content: "";
+            position: absolute;
+            right: -35px;
+            bottom: -45px;
+            width: 125px;
+            height: 125px;
+            border-radius: 50%;
+            background: rgba(40, 135, 255, 0.08);
+        }
+
+        .summary-card--income::after {
+            background: rgba(46, 203, 129, 0.10);
+        }
+
+        .summary-card--expense::after {
+            background: rgba(255, 95, 104, 0.10);
+        }
+
+        .summary-card--balance::after {
+            background: rgba(40, 135, 255, 0.11);
+        }
+
+        .summary-card--savings::after {
+            background: rgba(255, 138, 36, 0.11);
+        }
+
+        .summary-card__label {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .summary-card__value {
+            position: relative;
+            z-index: 1;
+            font-size: clamp(23px, 3vw, 31px);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .summary-card__note {
+            position: relative;
+            z-index: 1;
+            margin-top: 9px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .positive {
+            color: var(--green);
+        }
+
+        .negative {
+            color: var(--red);
+        }
+
+        /* =========================================================
+           7. ФОРМЫ
+           ========================================================= */
+
+        .form-card {
+            padding: 20px;
+        }
+
+        .form-card h3 {
+            margin: 0 0 18px;
+            font-size: 19px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .field {
+            grid-column: span 3;
+        }
+
+        .field--2 {
+            grid-column: span 2;
+        }
+
+        .field--4 {
+            grid-column: span 4;
+        }
+
+        .field--6 {
+            grid-column: span 6;
+        }
+
+        .field--8 {
+            grid-column: span 8;
+        }
+
+        .field--12 {
+            grid-column: span 12;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .field input,
+        .field select,
+        .field textarea {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            outline: none;
+            color: var(--text);
+            background: var(--background-secondary);
+            transition:
+                border-color 0.18s ease,
+                box-shadow 0.18s ease;
+        }
+
+        .field textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px var(--focus-ring);
+        }
+
+        .field input::placeholder,
+        .field textarea::placeholder {
+            color: var(--placeholder);
+        }
+
+        .form-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .form-message {
+            min-height: 20px;
+            margin-top: 10px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .form-message--error {
+            color: var(--red);
+        }
+
+        .form-message--success {
+            color: var(--green);
+        }
+
+        /* =========================================================
+           8. ФИЛЬТРЫ
+           ========================================================= */
+
+        .filters {
+            display: grid;
+            grid-template-columns: 1.4fr repeat(3, minmax(140px, 0.5fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .filters input,
+        .filters select {
+            width: 100%;
+            min-height: 42px;
+            padding: 9px 11px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            color: var(--text);
+            background: var(--background-secondary);
+        }
+
+        /* =========================================================
+           9. ТАБЛИЦЫ
+           ========================================================= */
+
+        .table-card {
+            overflow: hidden;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px;
+        }
+
+        th,
+        td {
+            padding: 14px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            color: var(--text-muted);
+            background: var(--table-head-bg);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            font-size: 14px;
+        }
+
+        tbody tr:hover {
+            background: var(--table-row-hover);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .table-comment {
+            max-width: 300px;
+            color: var(--text-muted);
+            line-height: 1.45;
+            word-break: break-word;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 7px;
+        }
+
+        .amount {
+            white-space: nowrap;
+            font-weight: 800;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            min-height: 26px;
+            padding: 4px 8px;
+            border: 1px solid transparent;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .badge--income {
+            border-color: rgba(46, 203, 129, 0.25);
+            color: #6ce3a7;
+            background: rgba(46, 203, 129, 0.10);
+        }
+
+        .badge--expense {
+            border-color: rgba(255, 95, 104, 0.25);
+            color: #ff979d;
+            background: rgba(255, 95, 104, 0.10);
+        }
+
+        [data-theme="light"] .badge--income {
+            color: #1a9d5c;
+        }
+
+        [data-theme="light"] .badge--expense {
+            color: #d63b44;
+        }
+
+        .badge--goal {
+            border-color: rgba(255, 138, 36, 0.25);
+            color: #ffb770;
+            background: rgba(255, 138, 36, 0.10);
+        }
+
+        .badge--credit {
+            border-color: rgba(255, 95, 104, 0.25);
+            color: #ff979d;
+            background: rgba(255, 95, 104, 0.10);
+        }
+
+        [data-theme="light"] .badge--goal {
+            color: #c56a00;
+        }
+
+        [data-theme="light"] .badge--credit {
+            color: #d63b44;
+        }
+
+        /* =========================================================
+           10. ФИНАНСОВЫЕ ЦЕЛИ
+           ========================================================= */
+
+        .goals-subsection {
+            margin-top: 24px;
+        }
+
+        .goals-subsection:first-of-type {
+            margin-top: 18px;
+        }
+
+        .goals-subsection__header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .goals-subsection__header h3 {
+            margin: 0 0 4px;
+            font-size: 20px;
+        }
+
+        .goals-subsection__header p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .goals-subsection__count {
+            flex-shrink: 0;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .goals-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .goal-card {
+            position: relative;
+            overflow: hidden;
+            padding: 19px;
+        }
+
+        .goal-card::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 4px;
+            background: linear-gradient(var(--orange), var(--blue));
+        }
+
+        .goal-card--credit::before {
+            background: linear-gradient(var(--red), var(--orange-dark));
+        }
+
+        .goal-card__header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .goal-card h3 {
+            margin: 0 0 6px;
+            font-size: 18px;
+            line-height: 1.3;
+        }
+
+        .goal-card__deadline {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .goal-card__numbers {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 20px 0 9px;
+            font-size: 13px;
+        }
+
+        .goal-card__numbers strong {
+            font-size: 17px;
+        }
+
+        .progress {
+            height: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--background-secondary);
+        }
+
+        .progress__bar {
+            width: 0;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--orange), var(--blue));
+            transition: width 0.35s ease;
+        }
+
+        .goal-card__meta {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .goal-card__meta-item {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface-subtle);
+        }
+
+        .goal-card__meta-item span {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        .goal-card__comment {
+            min-height: 40px;
+            margin-top: 14px;
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .goal-card__actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        /* =========================================================
+           11. АНАЛИТИКА ПО КАТЕГОРИЯМ
+           ========================================================= */
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .analytics-card {
+            padding: 20px;
+        }
+
+        .analytics-card h3 {
+            margin: 0 0 18px;
+            font-size: 18px;
+        }
+
+        .category-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .category-row__header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 7px;
+            font-size: 13px;
+        }
+
+        .category-row__name {
+            font-weight: 700;
+        }
+
+        .category-row__value {
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .category-bar {
+            height: 8px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: var(--background-secondary);
+        }
+
+        .category-bar__fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--blue), var(--orange));
+        }
+
+        /* =========================================================
+           12. ПУСТЫЕ СОСТОЯНИЯ
+           ========================================================= */
+
+        .empty-state {
+            padding: 35px 20px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state__icon {
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .empty-state strong {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        /* =========================================================
+           13. МОДАЛЬНОЕ ОКНО
+           ========================================================= */
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: grid;
+            place-items: center;
+            padding: 18px;
+            background: var(--modal-overlay);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal__dialog {
+            width: min(620px, 100%);
+            max-height: calc(100vh - 36px);
+            overflow-y: auto;
+            padding: 22px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--card);
+            box-shadow: var(--modal-shadow);
+        }
+
+        .modal__header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .modal__header h3 {
+            margin: 0 0 5px;
+        }
+
+        .modal__header p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* =========================================================
+           14. УВЕДОМЛЕНИЯ
+           ========================================================= */
+
+        .toast-container {
+            position: fixed;
+            right: 18px;
+            /* Смещаем уведомления выше, чтобы не перекрывать кнопку темы */
+            bottom: 86px;
+            z-index: 200;
+            display: grid;
+            width: min(360px, calc(100% - 36px));
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 13px 15px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            background: var(--card-light);
+            box-shadow: var(--shadow);
+            animation: toastIn 0.25s ease;
+        }
+
+        .toast--success {
+            border-color: rgba(46, 203, 129, 0.38);
+        }
+
+        .toast--error {
+            border-color: rgba(255, 95, 104, 0.42);
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* =========================================================
+           15. ПЕРЕКЛЮЧЕНИЕ ТЕМЫ
+           ========================================================= */
+
+        .theme-toggle {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 250;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 48px;
+            padding: 10px 16px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            color: var(--text);
+            background: var(--theme-toggle-bg);
+            box-shadow: var(--theme-toggle-shadow);
+            font-size: 14px;
+            font-weight: 700;
+            transition:
+                transform 0.18s ease,
+                border-color 0.18s ease,
+                background 0.25s ease,
+                color 0.25s ease,
+                box-shadow 0.25s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-1px);
+            border-color: var(--blue);
+        }
+
+        .theme-toggle:active {
+            transform: translateY(0);
+        }
+
+        .theme-toggle__icon {
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        /* =========================================================
+           16. ПОДВАЛ
+           ========================================================= */
+
+        .footer {
+            padding: 20px 0 35px;
+            color: var(--text-muted);
+            text-align: center;
+            font-size: 13px;
+        }
+
+        /* =========================================================
+           17. АДАПТИВНОСТЬ
+           ========================================================= */
+
+        @media (max-width: 1100px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .goals-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .field,
+            .field--2,
+            .field--4 {
+                grid-column: span 4;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .header__content {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .header__actions {
+                justify-content: flex-start;
+            }
+
+            .filters,
+            .analytics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .field,
+            .field--2,
+            .field--4,
+            .field--6,
+            .field--8 {
+                grid-column: span 6;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .container {
+                width: min(100% - 20px, 1440px);
+            }
+
+            .header {
+                padding-top: 22px;
+            }
+
+            .brand {
+                align-items: flex-start;
+            }
+
+            .brand__icon {
+                width: 45px;
+                height: 45px;
+                border-radius: 13px;
+                font-size: 23px;
+            }
+
+            .header__actions {
+                width: 100%;
+            }
+
+            .header__actions .button {
+                flex: 1;
+            }
+
+            .summary-grid,
+            .goals-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .field,
+            .field--2,
+            .field--4,
+            .field--6,
+            .field--8,
+            .field--12 {
+                grid-column: span 12;
+            }
+
+            .section__header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .goal-card__meta {
+                grid-template-columns: 1fr;
+            }
+
+            .theme-toggle {
+                min-width: 48px;
+                padding: 0 14px;
+            }
+
+            .theme-toggle__label {
+                display: none;
+            }
+        }
+
+        /* =========================================================
+           18. СТИЛИ ДЛЯ ПЕЧАТИ
+           ========================================================= */
+
+        @media print {
+            body {
+                color: black;
+                background: white;
+            }
+
+            .navigation,
+            .header__actions,
+            .form-card,
+            .filters,
+            .table-actions,
+            .goal-card__actions,
+            .footer,
+            .toast-container,
+            .theme-toggle {
+                display: none !important;
+            }
+
+            .card {
+                border: 1px solid #cccccc;
+                color: black;
+                background: white;
+                box-shadow: none;
+            }
+
+            .summary-card__label,
+            .summary-card__note,
+            .goal-card__deadline,
+            .goal-card__comment,
+            .table-comment,
+            .section__header p {
+                color: #555555;
+            }
+
+            main {
+                padding-top: 0;
+            }
+        }
+
+/* Motion enhancements */
+.summary-card,
+.goal-card {
+    transition: transform 180ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.summary-card:hover,
+.goal-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(40, 135, 255, 0.42);
+}
+
+.summary-card__value.value-changed {
+    animation: valueChanged 520ms ease-out;
+}
+
+.record-enter {
+    animation: recordEnter 360ms ease-out both;
+}
+
+.goal-card--enter {
+    animation: cardEnter 420ms ease-out both;
+}
+
+.goal-card--updated {
+    animation: goalUpdated 680ms ease-out;
+}
+
+.progress__bar {
+    transition: width 560ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.modal:not(.hidden) {
+    animation: modalOverlayIn 180ms ease-out both;
+}
+
+.modal:not(.hidden) .modal__dialog {
+    animation: modalDialogIn 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.theme-toggle__icon--spin {
+    animation: themeIconSpin 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes themeIconSpin {
+    from { opacity: 0.35; transform: rotate(-75deg) scale(0.75); }
+    to { opacity: 1; transform: rotate(0) scale(1); }
+}
+
+.form-message--shake {
+    animation: formMessageShake 280ms ease-in-out;
+}
+
+@keyframes valueChanged {
+    0% { transform: translateY(3px); opacity: 0.72; }
+    55% { color: var(--blue); }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes recordEnter {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cardEnter {
+    from { opacity: 0; transform: translateY(12px) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes goalUpdated {
+    0% { border-color: var(--border); }
+    35% { border-color: var(--orange); box-shadow: 0 0 0 4px rgba(255, 138, 36, 0.12); }
+    100% { border-color: var(--border); box-shadow: var(--shadow); }
+}
+
+@keyframes modalOverlayIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes modalDialogIn {
+    from { opacity: 0; transform: translateY(14px) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes formMessageShake {
+    0%, 100% { transform: translateX(0); }
+    30% { transform: translateX(-5px); }
+    60% { transform: translateX(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+.accounts-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+.accounts-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+.account-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px; }
+.account-card span { display: block; margin-bottom: 7px; color: var(--text-muted); font-size: 13px; font-weight: 700; }
+.account-card strong { display: block; font-size: 22px; }
+@media (max-width: 800px) { .accounts-layout, .accounts-grid { grid-template-columns: 1fr; } }
+
+.summary-period { display: flex; align-items: end; gap: 12px; margin-bottom: 14px; }
+.summary-period > .field { width: min(260px, 100%); }
+.summary-period__custom { display: flex; gap: 10px; }
+.summary-period__custom .field { min-width: 170px; }
+@media (max-width: 620px) { .summary-period, .summary-period__custom { align-items: stretch; flex-direction: column; } .summary-period > .field, .summary-period__custom .field { width: 100%; min-width: 0; } }
+
+        .credit-schedule {
+            margin-top: 16px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 14px;
+        }
+
+        .credit-schedule summary {
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .credit-schedule__table-wrap {
+            max-height: 340px;
+            margin-top: 12px;
+            overflow: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        .credit-schedule__table {
+            width: 100%;
+            min-width: 720px;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        .credit-schedule__table th,
+        .credit-schedule__table td {
+            padding: 9px 10px;
+            text-align: right;
+            white-space: nowrap;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .credit-schedule__table th {
+            position: sticky;
+            top: 0;
+            background: var(--surface-color);
+            z-index: 1;
+        }
+
+        .credit-schedule__table th:first-child,
+        .credit-schedule__table td:first-child,
+        .credit-schedule__table th:nth-child(2),
+        .credit-schedule__table td:nth-child(2) {
+            text-align: left;
+        }
+
+        .credit-schedule__empty {
+            margin: 10px 0 0;
+            color: var(--muted-color);
+        }
+        .goal-card__indicators {
+            display: grid;
+            gap: 18px;
+            margin-top: 18px;
+        }
+
+        .goal-card__indicator-group {
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .goal-card__indicator-group h4 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+            font-size: 13px;
+        }
+
+        .goal-card__indicator-group .goal-card__meta {
+            margin-top: 10px;
+        }
+
+        .indicator-label {
+            display: inline-flex;
+            align-items: center;
+            min-height: 22px;
+            padding: 3px 7px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .indicator-label--actual {
+            color: var(--green);
+            background: color-mix(in srgb, var(--green) 12%, transparent);
+        }
+
+        .indicator-label--forecast {
+            color: var(--blue);
+            background: color-mix(in srgb, var(--blue) 12%, transparent);
+        }
+
+        .goal-card__indicator-group--actual .goal-card__meta-item {
+            border-left: 3px solid var(--green);
+        }
+
+        .goal-card__indicator-group--forecast .goal-card__meta-item {
+            border-left: 3px solid var(--blue);
+        }

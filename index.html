@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+
+    <!-- Адаптация интерфейса для смартфонов -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Семейный бюджет</title>
+
+    <!--
+        Ранняя установка темы до отрисовки страницы.
+        Так пользователь не видит «мигание» при загрузке сохранённой темы.
+    -->
+    <script>
+        (function () {
+                    const THEME_STORAGE_KEY = "familyBudgetTheme_v1";
+                    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+                    const theme = savedTheme === "light" || savedTheme === "dark"
+                        ? savedTheme
+                        : "dark";
+        
+                    document.documentElement.setAttribute("data-theme", theme);
+                })();
+    </script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- =========================================================
+         ШАПКА ПРИЛОЖЕНИЯ
+         ========================================================= -->
+
+    <header class="header">
+        <div class="container header__content">
+            <div class="brand">
+                <div class="brand__icon" aria-hidden="true">🧭</div>
+
+                <div>
+                    <h1>Семейный бюджет</h1>
+                    <p>Доходы, расходы, накопления и финансовые цели в одной системе.</p>
+                </div>
+            </div>
+
+            <div class="header__actions">
+                <button class="button button--secondary" id="exportButton" type="button">
+                    Экспорт данных
+                </button>
+
+                <button class="button button--secondary" id="importButton" type="button">
+                    Импорт данных
+                </button>
+
+                <button class="button button--danger" id="resetButton" type="button">
+                    Очистить всё
+                </button>
+
+                <!-- Скрытое поле используется для импорта JSON-файла -->
+                <input
+                    class="hidden"
+                    id="importFileInput"
+                    type="file"
+                    accept=".json,application/json"
+                >
+            </div>
+        </div>
+    </header>
+
+    <!-- Быстрые ссылки на разделы -->
+    <nav class="navigation">
+        <div class="container navigation__inner">
+            <a class="navigation__link" href="#summary">Сводка</a>
+            <a class="navigation__link" href="#transactions">Доходы и расходы</a>
+            <a class="navigation__link" href="#goals">Финансовые цели</a>
+            <a class="navigation__link" href="#contributions">Вклады</a>
+            <a class="navigation__link" href="#analytics">Аналитика</a>
+        </div>
+    </nav>
+
+    <main class="container">
+
+        <!-- =====================================================
+             СВОДКА
+             ===================================================== -->
+
+        <section class="section" id="summary">
+            <div class="section__header">
+                <div>
+                    <h2>Финансовая сводка</h2>
+                    <p>Общая картина по всем внесённым данным.</p>
+                </div>
+
+                <button class="button button--secondary" id="printButton" type="button">
+                    Распечатать отчёт
+                </button>
+            </div>
+
+            <div class="summary-period">
+                <div class="field">
+                    <label for="summaryPeriod">Период сводки</label>
+                    <select id="summaryPeriod">
+                        <option value="month">Текущий месяц</option>
+                        <option value="year">Текущий год</option>
+                        <option value="all">Весь период</option>
+                        <option value="custom">Произвольный период</option>
+                    </select>
+                </div>
+                <div class="summary-period__custom hidden" id="summaryCustomPeriod">
+                    <div class="field"><label for="summaryDateFrom">С даты</label><input id="summaryDateFrom" type="date"></div>
+                    <div class="field"><label for="summaryDateTo">По дату</label><input id="summaryDateTo" type="date"></div>
+                </div>
+            </div>
+            <div class="summary-grid">
+                <article class="card summary-card summary-card--income">
+                    <div class="summary-card__label">
+                        <span>↗</span>
+                        Доход за период
+                    </div>
+
+                    <div class="summary-card__value positive" id="totalIncome">
+                        0 ₽
+                    </div>
+
+                    <div class="summary-card__note" id="incomeCount">
+                        Операций: 0
+                    </div>
+                </article>
+
+                <article class="card summary-card summary-card--expense">
+                    <div class="summary-card__label">
+                        <span>↘</span>
+                        Расходы за период
+                    </div>
+
+                    <div class="summary-card__value negative" id="totalExpense">
+                        0 ₽
+                    </div>
+
+                    <div class="summary-card__note" id="expenseCount">
+                        Операций: 0
+                    </div>
+                </article>
+
+                <article class="card summary-card summary-card--balance">
+                    <div class="summary-card__label">
+                        <span>◉</span>
+                        Основной счёт
+                    </div>
+
+                    <div class="summary-card__value" id="totalBalance">
+                        0 ₽
+                    </div>
+
+                    <div class="summary-card__note" id="balanceStatus">
+                        Текущий доступный остаток
+                    </div>
+                </article>
+
+                <article class="card summary-card summary-card--savings">
+                    <div class="summary-card__label">
+                        <span>◆</span>
+                        Во вкладах
+                    </div>
+
+                    <div class="summary-card__value" id="totalSavings">
+                        0 ₽
+                    </div>
+
+                    <div class="summary-card__note" id="goalsCount">
+                        Активных целей: 0
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- =====================================================
+             ДОХОДЫ И РАСХОДЫ
+             ===================================================== -->
+
+        <section class="section" id="accounts">
+            <div class="section__header">
+                <div>
+                    <h2>&#1057;&#1095;&#1077;&#1090;&#1072; &#1080; &#1087;&#1077;&#1088;&#1077;&#1074;&#1086;&#1076;&#1099;</h2>
+                    <p>&#1054;&#1089;&#1090;&#1072;&#1090;&#1082;&#1080; &#1087;&#1086; &#1089;&#1095;&#1077;&#1090;&#1072;&#1084; &#1080; &#1087;&#1077;&#1088;&#1077;&#1084;&#1077;&#1097;&#1077;&#1085;&#1080;&#1103; &#1076;&#1077;&#1085;&#1077;&#1075; &#1084;&#1077;&#1078;&#1076;&#1091; &#1085;&#1080;&#1084;&#1080;.</p>
+                </div>
+            </div>
+            <div class="accounts-layout">
+                <form class="card form-card" id="accountForm">
+                    <h3>&#1053;&#1086;&#1074;&#1099;&#1081; &#1089;&#1095;&#1077;&#1090;</h3>
+                    <div class="form-grid">
+                        <div class="field field--6"><label for="accountName">&#1053;&#1072;&#1079;&#1074;&#1072;&#1085;&#1080;&#1077;</label><input id="accountName" maxlength="80" required placeholder="&#1054;&#1089;&#1085;&#1086;&#1074;&#1085;&#1072;&#1103; &#1082;&#1072;&#1088;&#1090;&#1072;"></div>
+                        <div class="field field--6"><label for="accountOpeningBalance">&#1053;&#1072;&#1095;&#1072;&#1083;&#1100;&#1085;&#1099;&#1081; &#1086;&#1089;&#1090;&#1072;&#1090;&#1086;&#1082;, &#8381;</label><input id="accountOpeningBalance" type="number" step="0.01" value="0" required></div>
+                    </div>
+                    <div class="form-actions"><button class="button button--primary" type="submit">&#1044;&#1086;&#1073;&#1072;&#1074;&#1080;&#1090;&#1100; &#1089;&#1095;&#1077;&#1090;</button></div>
+                    <div class="form-message" id="accountMessage"></div>
+                </form>
+                <form class="card form-card" id="transferForm">
+                    <h3>&#1053;&#1086;&#1074;&#1099;&#1081; &#1087;&#1077;&#1088;&#1077;&#1074;&#1086;&#1076;</h3>
+                    <div class="form-grid">
+                        <div class="field field--4"><label for="transferDate">&#1044;&#1072;&#1090;&#1072;</label><input id="transferDate" type="date" required></div>
+                        <div class="field field--4"><label for="transferFrom">&#1057;&#1086; &#1089;&#1095;&#1077;&#1090;&#1072;</label><select id="transferFrom" required></select></div>
+                        <div class="field field--4"><label for="transferTo">&#1053;&#1072; &#1089;&#1095;&#1077;&#1090;</label><select id="transferTo" required></select></div>
+                        <div class="field field--4"><label for="transferAmount">&#1057;&#1091;&#1084;&#1084;&#1072;, &#8381;</label><input id="transferAmount" type="number" min="0.01" step="0.01" required></div>
+                        <div class="field field--8"><label for="transferComment">&#1050;&#1086;&#1084;&#1084;&#1077;&#1085;&#1090;&#1072;&#1088;&#1080;&#1081;</label><input id="transferComment" maxlength="300"></div>
+                    </div>
+                    <div class="form-actions"><button class="button button--blue" type="submit">&#1055;&#1077;&#1088;&#1077;&#1074;&#1077;&#1089;&#1090;&#1080;</button></div>
+                    <div class="form-message" id="transferMessage"></div>
+                </form>
+            </div>
+            <div class="accounts-grid" id="accountsGrid"></div>
+            <div class="card table-card"><div class="table-wrapper"><table><thead><tr><th>&#1044;&#1072;&#1090;&#1072;</th><th>&#1054;&#1090;&#1082;&#1091;&#1076;&#1072;</th><th>&#1050;&#1091;&#1076;&#1072;</th><th>&#1057;&#1091;&#1084;&#1084;&#1072;</th><th>&#1050;&#1086;&#1084;&#1084;&#1077;&#1085;&#1090;&#1072;&#1088;&#1080;&#1081;</th><th>&#1044;&#1077;&#1081;&#1089;&#1090;&#1074;&#1080;&#1103;</th></tr></thead><tbody id="transfersTableBody"></tbody></table></div><div class="empty-state" id="transfersEmptyState">&#1055;&#1077;&#1088;&#1077;&#1074;&#1086;&#1076;&#1086;&#1074; &#1087;&#1086;&#1082;&#1072; &#1085;&#1077;&#1090;.</div></div>
+        </section>
+        <section class="section" id="transactions">
+            <div class="section__header">
+                <div>
+                    <h2>Доходы и расходы</h2>
+                    <p>Записывайте все поступления и траты семьи.</p>
+                </div>
+            </div>
+
+            <form class="card form-card" id="transactionForm">
+                <h3 id="transactionFormTitle">Добавить операцию</h3>
+
+                <!-- В это поле записывается ID редактируемой операции -->
+                <input id="transactionId" type="hidden">
+
+                <div class="form-grid">
+                    <div class="field field--2">
+                        <label for="transactionDate">Дата</label>
+                        <input id="transactionDate" type="date" required>
+                    </div>
+
+                    <div class="field field--2">
+                        <label for="transactionType">Тип операции</label>
+                        <select id="transactionType" required>
+                            <option value="income">Доход</option>
+                            <option value="expense">Расход</option>
+                        </select>
+                    </div>
+
+                    <div class="field field--2">
+                        <label for="transactionAmount">Сумма, ₽</label>
+                        <input
+                            id="transactionAmount"
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            placeholder="Например, 50000"
+                            required
+                        >
+                    </div>
+
+                    <div class="field field--3">
+                        <label for="transactionAccount">&#1057;&#1095;&#1077;&#1090;</label>
+                        <select id="transactionAccount" required></select>
+                    </div>
+                    <div class="field field--3">
+                        <label for="transactionCategory">Категория</label>
+                        <input
+                            id="transactionCategory"
+                            type="text"
+                            list="categorySuggestions"
+                            maxlength="60"
+                            placeholder="Зарплата, продукты..."
+                            required
+                        >
+
+                        <datalist id="categorySuggestions">
+                            <option value="Зарплата">
+                            <option value="Подработка">
+                            <option value="Продажи">
+                            <option value="Подарки">
+                            <option value="Продукты">
+                            <option value="Жильё">
+                            <option value="Коммунальные услуги">
+                            <option value="Транспорт">
+                            <option value="Здоровье">
+                            <option value="Образование">
+                            <option value="Дети">
+                            <option value="Одежда">
+                            <option value="Развлечения">
+                            <option value="Путешествия">
+                            <option value="Кредиты">
+                            <option value="Другое">
+                        </datalist>
+                    </div>
+
+                    <div class="field field--3">
+                        <label for="transactionMember">Член семьи</label>
+                        <input
+                            id="transactionMember"
+                            type="text"
+                            maxlength="60"
+                            placeholder="Например, Михаил"
+                        >
+                    </div>
+
+                    <div class="field field--12">
+                        <label for="transactionComment">Комментарий</label>
+                        <textarea
+                            id="transactionComment"
+                            maxlength="500"
+                            placeholder="Дополнительная информация об операции"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="button button--primary" type="submit">
+                        Сохранить операцию
+                    </button>
+
+                    <button
+                        class="button button--secondary hidden"
+                        id="cancelTransactionEdit"
+                        type="button"
+                    >
+                        Отменить редактирование
+                    </button>
+                </div>
+
+                <div class="form-message" id="transactionMessage"></div>
+            </form>
+
+            <div style="height: 16px;"></div>
+
+            <div class="filters">
+                <input
+                    id="transactionSearch"
+                    type="search"
+                    placeholder="Поиск по категории, участнику или комментарию"
+                >
+
+                <select id="transactionTypeFilter">
+                    <option value="all">Все операции</option>
+                    <option value="income">Только доходы</option>
+                    <option value="expense">Только расходы</option>
+                </select>
+
+                <input
+                    id="transactionMonthFilter"
+                    type="month"
+                    aria-label="Фильтр по месяцу"
+                >
+
+                <button
+                    class="button button--secondary"
+                    id="clearTransactionFilters"
+                    type="button"
+                >
+                    Сбросить фильтры
+                </button>
+            </div>
+
+            <div class="card table-card">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Тип</th>
+                                <th>&#1057;&#1095;&#1077;&#1090;</th>
+                                <th>Категория</th>
+                                <th>Член семьи</th>
+                                <th>Комментарий</th>
+                                <th>Сумма</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="transactionsTableBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state hidden" id="transactionsEmptyState">
+                    <div class="empty-state__icon">📋</div>
+                    <strong>Операций пока нет</strong>
+                    Добавьте первый доход или расход.
+                </div>
+            </div>
+        </section>
+
+        <!-- =====================================================
+             ФИНАНСОВЫЕ ЦЕЛИ
+             ===================================================== -->
+
+        <section class="section" id="goals">
+            <div class="section__header">
+                <div>
+                    <h2>Финансовые цели</h2>
+                    <p>Вклады с доходностью и кредиты с планом погашения.</p>
+                </div>
+            </div>
+
+            <form class="card form-card" id="goalForm">
+                <h3 id="goalFormTitle">Добавить финансовую цель</h3>
+
+                <input id="goalId" type="hidden">
+
+                <div class="form-grid">
+                    <!-- Тип цели определяет, попадёт ли запись во вклады или кредиты -->
+                    <div class="field field--3">
+                        <label for="goalType">Тип цели</label>
+                        <select id="goalType" required>
+                            <option value="deposit">Вклад</option>
+                            <option value="credit">Кредит</option>
+                        </select>
+                    </div>
+
+                    <div class="field field--3">
+                        <label for="goalName">Название</label>
+                        <input
+                            id="goalName"
+                            type="text"
+                            maxlength="100"
+                            placeholder="Например, семейный отпуск"
+                            required
+                        >
+                    </div>
+
+                    <div class="field field--2">
+                        <label for="goalTarget" id="goalTargetLabel">Нужная сумма, ₽</label>
+                        <input
+                            id="goalTarget"
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            placeholder="300000"
+                            required
+                        >
+                    </div>
+
+                    <div class="field field--2">
+                        <label for="goalInitialAmount" id="goalInitialAmountLabel">
+                            Уже накоплено, ₽
+                        </label>
+                        <input
+                            id="goalInitialAmount"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value="0"
+                            required
+                        >
+                    </div>
+
+                    <!-- Поле доходности показывается только для вкладов -->
+                    <div class="field field--2" id="goalAnnualRateField">
+                        <label for="goalAnnualRate">Годовой доход, %</label>
+                        <input
+                            id="goalAnnualRate"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            placeholder="12"
+                        >
+                    </div>
+
+                    <div class="field field--2" id="goalOpenedAtField">
+                        <label for="goalOpenedAt">Дата открытия</label>
+                        <input id="goalOpenedAt" type="date">
+                    </div>
+
+                    <div class="field field--2" id="goalBalanceAsOfField">
+                        <label for="goalBalanceAsOf">Сумма актуальна на</label>
+                        <input id="goalBalanceAsOf" type="date">
+                    </div>
+
+                    <div class="field field--2" id="goalCapitalizationField">
+                        <label for="goalCapitalization">Капитализация</label>
+                        <select id="goalCapitalization">
+                            <option value="monthly">Ежемесячно</option>
+                            <option value="none">Без капитализации</option>
+                        </select>
+                    </div>
+
+                    <div class="field field--4">
+                        <label for="goalDeadline" id="goalDeadlineLabel">Желаемый срок</label>
+                        <input id="goalDeadline" type="date">
+                    </div>
+
+                    <div class="field field--12">
+                        <label for="goalComment">Комментарий</label>
+                        <textarea
+                            id="goalComment"
+                            maxlength="500"
+                            placeholder="Зачем нужна цель, условия, важные детали"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="button button--primary" type="submit">
+                        Сохранить цель
+                    </button>
+
+                    <button
+                        class="button button--secondary hidden"
+                        id="cancelGoalEdit"
+                        type="button"
+                    >
+                        Отменить редактирование
+                    </button>
+                </div>
+
+                <div class="form-message" id="goalMessage"></div>
+            </form>
+
+            <!-- Блок вкладов: накопления с процентом годового дохода -->
+            <div class="goals-subsection" id="depositsSubsection">
+                <div class="goals-subsection__header">
+                    <div>
+                        <h3>Вклады</h3>
+                        <p>Накопления с учётом ставки годового дохода.</p>
+                    </div>
+                    <span class="goals-subsection__count" id="depositsCount">0 вкладов</span>
+                </div>
+
+                <div class="goals-grid" id="depositsGrid"></div>
+
+                <div class="card empty-state hidden" id="depositsEmptyState">
+                    <div class="empty-state__icon">🏦</div>
+                    <strong>Вкладов пока нет</strong>
+                    Создайте вклад и укажите процент годового дохода.
+                </div>
+            </div>
+
+            <!-- Блок кредитов: задолженности и план погашения -->
+            <div class="goals-subsection" id="creditsSubsection">
+                <div class="goals-subsection__header">
+                    <div>
+                        <h3>Кредиты</h3>
+                        <p>Отслеживайте остаток долга и рекомендуемые платежи.</p>
+                    </div>
+                    <span class="goals-subsection__count" id="creditsCount">0 кредитов</span>
+                </div>
+
+                <div class="goals-grid" id="creditsGrid"></div>
+
+                <div class="card empty-state hidden" id="creditsEmptyState">
+                    <div class="empty-state__icon">💳</div>
+                    <strong>Кредитов пока нет</strong>
+                    Добавьте кредит и фиксируйте платежи по нему.
+                </div>
+            </div>
+        </section>
+
+        <!-- =====================================================
+             ВКЛАДЫ В ФИНАНСОВЫЕ ЦЕЛИ
+             ===================================================== -->
+
+        <section class="section" id="contributions">
+            <div class="section__header">
+                <div>
+                    <h2>История вкладов</h2>
+                    <p>
+                        Каждый вклад можно добавить, изменить, удалить и дополнить комментарием.
+                    </p>
+                </div>
+            </div>
+
+            <form class="card form-card" id="contributionForm">
+                <h3 id="contributionFormTitle">Добавить вклад</h3>
+
+                <input id="contributionId" type="hidden">
+
+                <div class="form-grid">
+                    <div class="field field--3">
+                        <label for="contributionGoal">Финансовая цель</label>
+                        <select id="contributionGoal" required>
+                            <option value="">Выберите цель</option>
+                        </select>
+                    </div>
+
+                    <div class="field field--3">
+                        <label for="contributionAccount">Списать со счета</label>
+                        <select id="contributionAccount" required></select>
+                    </div>
+                    <div class="field field--2">
+                        <label for="contributionDate">Дата вклада</label>
+                        <input id="contributionDate" type="date" required>
+                    </div>
+
+                    <div class="field field--3">
+                        <label for="contributionAmount">Сумма, ₽</label>
+                        <input
+                            id="contributionAmount"
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            placeholder="Например, 10000"
+                            required
+                        >
+                    </div>
+
+                    <div class="field field--4">
+                        <label for="contributionSource">Источник</label>
+                        <input
+                            id="contributionSource"
+                            type="text"
+                            maxlength="100"
+                            placeholder="Зарплата, премия, экономия..."
+                        >
+                    </div>
+
+                    <div class="field field--12">
+                        <label for="contributionComment">Комментарий</label>
+                        <textarea
+                            id="contributionComment"
+                            maxlength="500"
+                            placeholder="Что важно запомнить об этом вкладе"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="button button--blue" type="submit">
+                        Сохранить вклад
+                    </button>
+
+                    <button
+                        class="button button--secondary hidden"
+                        id="cancelContributionEdit"
+                        type="button"
+                    >
+                        Отменить редактирование
+                    </button>
+                </div>
+
+                <div class="form-message" id="contributionMessage"></div>
+            </form>
+
+            <div style="height: 16px;"></div>
+
+            <div class="filters">
+                <input
+                    id="contributionSearch"
+                    type="search"
+                    placeholder="Поиск по цели, источнику или комментарию"
+                >
+
+                <select id="contributionGoalFilter">
+                    <option value="all">Все цели</option>
+                </select>
+
+                <input
+                    id="contributionMonthFilter"
+                    type="month"
+                    aria-label="Фильтр вкладов по месяцу"
+                >
+
+                <button
+                    class="button button--secondary"
+                    id="clearContributionFilters"
+                    type="button"
+                >
+                    Сбросить фильтры
+                </button>
+            </div>
+
+            <div class="card table-card">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Финансовая цель</th>
+                                <th>Счет списания</th>
+                                <th>Источник</th>
+                                <th>Комментарий</th>
+                                <th>Сумма</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="contributionsTableBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state hidden" id="contributionsEmptyState">
+                    <div class="empty-state__icon">💰</div>
+                    <strong>Вкладов пока нет</strong>
+                    Сначала создайте финансовую цель, затем добавьте вклад.
+                </div>
+            </div>
+        </section>
+
+        <!-- =====================================================
+             АНАЛИТИКА
+             ===================================================== -->
+
+        <section class="section" id="analytics">
+            <div class="section__header">
+                <div>
+                    <h2>Аналитика</h2>
+                    <p>Распределение доходов и расходов по категориям.</p>
+                </div>
+            </div>
+
+            <div class="analytics-grid">
+                <article class="card analytics-card">
+                    <h3>Расходы по категориям</h3>
+                    <div class="category-list" id="expenseAnalytics"></div>
+                </article>
+
+                <article class="card analytics-card">
+                    <h3>Доходы по категориям</h3>
+                    <div class="category-list" id="incomeAnalytics"></div>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            Данные хранятся только в браузере на этом устройстве.
+            Используйте экспорт для создания резервной копии.
+        </div>
+    </footer>
+
+    <!-- =========================================================
+         МОДАЛЬНОЕ ОКНО БЫСТРОГО ВКЛАДА
+         ========================================================= -->
+
+    <div
+        class="modal hidden"
+        id="quickContributionModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quickContributionTitle"
+    >
+        <div class="modal__dialog">
+            <div class="modal__header">
+                <div>
+                    <h3 id="quickContributionTitle">Добавить вклад</h3>
+                    <p id="quickContributionGoalName"></p>
+                </div>
+
+                <button
+                    class="icon-button"
+                    id="closeQuickContributionModal"
+                    type="button"
+                    aria-label="Закрыть"
+                >
+                    ✕
+                </button>
+            </div>
+
+            <form id="quickContributionForm">
+                <input id="quickContributionGoalId" type="hidden">
+
+                <div class="form-grid">
+                    <div class="field field--6">
+                        <label for="quickContributionDate">Дата</label>
+                        <input id="quickContributionDate" type="date" required>
+                    </div>
+
+                    <div class="field field--6">
+                        <label for="quickContributionAmount">Сумма, ₽</label>
+                        <input
+                            id="quickContributionAmount"
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            required
+                        >
+                    </div>
+
+                    <div class="field field--6">
+                        <label for="quickContributionAccount">Списать со счета</label>
+                        <select id="quickContributionAccount" required></select>
+                    </div>
+                    <div class="field field--12">
+                        <label for="quickContributionSource">Источник</label>
+                        <input
+                            id="quickContributionSource"
+                            type="text"
+                            maxlength="100"
+                            placeholder="Например, часть зарплаты"
+                        >
+                    </div>
+
+                    <div class="field field--12">
+                        <label for="quickContributionComment">Комментарий</label>
+                        <textarea
+                            id="quickContributionComment"
+                            maxlength="500"
+                            placeholder="Комментарий к вкладу"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="button button--primary" type="submit">
+                        Добавить вклад
+                    </button>
+
+                    <button
+                        class="button button--secondary"
+                        id="cancelQuickContribution"
+                        type="button"
+                    >
+                        Отмена
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Контейнер для всплывающих уведомлений -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!--
+        Кнопка переключения темы.
+        Закреплена в правом нижнем углу и всегда доступна при прокрутке.
+    -->
+    <button
+        class="theme-toggle"
+        id="themeToggleButton"
+        type="button"
+        aria-label="Переключить тему оформления"
+        title="Переключить тему"
+    >
+        <span class="theme-toggle__icon" id="themeToggleIcon" aria-hidden="true">☀️</span>
+        <span class="theme-toggle__label" id="themeToggleLabel">Светлая</span>
+    </button>
+    <script src="constants.js"></script>
+    <script src="state.js"></script>
+    <script src="money.js"></script>
+    <script src="dates.js"></script>
+    <script src="formatting.js"></script>
+    <script src="ui.js"></script>
+    <script src="calculations.js"></script>
+    <script src="storage.js"></script>
+    <script src="accounts.js"></script>
+    <script src="transactions.js"></script>
+    <script src="goals.js"></script>
+    <script src="contributions.js"></script>
+    <script src="analytics.js"></script>
+    <script src="backup.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

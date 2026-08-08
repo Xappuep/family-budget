@@ -251,6 +251,16 @@
             }
 
             const isIncome = elements.quickAddType.value === "income";
+            const confirmMode =
+                typeof isVoiceDraftActive === "function" && isVoiceDraftActive();
+
+            if (confirmMode) {
+                elements.quickAddSubmit.textContent = isIncome
+                    ? "Подтвердить доход"
+                    : "Подтвердить расход";
+                return;
+            }
+
             elements.quickAddSubmit.textContent = isIncome
                 ? "Добавить доход"
                 : "Добавить расход";
@@ -408,6 +418,10 @@
                 elements.quickAddSubmit.disabled = false;
             }
 
+            if (typeof clearVoiceUi === "function") {
+                clearVoiceUi({ keepUnsupported: true });
+            }
+
             renderQuickAddCategories();
         }
 
@@ -420,8 +434,11 @@
 
         /**
          * Открывает мобильный Quick Add (bottom sheet).
+         * @param {{ focusAmount?: boolean }} [options]
          */
-        function openQuickAddSheet() {
+        function openQuickAddSheet(options = {}) {
+            const { focusAmount = true } = options;
+
             if (!elements.quickAddModal) {
                 return;
             }
@@ -437,7 +454,7 @@
             window.requestAnimationFrame(() => {
                 renderQuickAddCategories();
 
-                if (elements.quickAddAmount) {
+                if (focusAmount && elements.quickAddAmount) {
                     elements.quickAddAmount.focus();
                 }
             });
@@ -451,6 +468,10 @@
 
             if (!elements.quickAddModal) {
                 return;
+            }
+
+            if (typeof abortVoiceRecognition === "function") {
+                abortVoiceRecognition();
             }
 
             elements.quickAddModal.classList.add("hidden");

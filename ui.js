@@ -221,6 +221,10 @@
             quickAddSubmit: document.getElementById("quickAddSubmit"),
             closeQuickAddModal: document.getElementById("closeQuickAddModal"),
             cancelQuickAdd: document.getElementById("cancelQuickAdd"),
+            quickAddVoiceButton: document.getElementById("quickAddVoiceButton"),
+            quickAddVoiceStatus: document.getElementById("quickAddVoiceStatus"),
+            quickAddVoicePreview: document.getElementById("quickAddVoicePreview"),
+            homeVoiceButton: document.getElementById("homeVoiceButton"),
 
             toastContainer: document.getElementById("toastContainer"),
 
@@ -272,6 +276,14 @@
 
             if (typeof closeMobileTransientForms === "function") {
                 closeMobileTransientForms();
+            }
+
+            if (typeof abortVoiceRecognition === "function") {
+                abortVoiceRecognition();
+            }
+
+            if (typeof isQuickAddOpen === "function" && isQuickAddOpen()) {
+                closeQuickAddSheet({ restoreFocus: false });
             }
 
             activeMobileTab = nextTab;

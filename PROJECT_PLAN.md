@@ -265,7 +265,7 @@ Desktop-таблицу сохранить для больших экранов.
 
 Пользовательская проверка успешно завершена.
 
-### Этап 5. Mobile Goals & Accounts — IN PROGRESS
+### Этап 5. Mobile Goals & Accounts — DONE
 
 Переработать мобильное представление:
 
@@ -279,9 +279,9 @@ Desktop-таблицу сохранить для больших экранов.
 
 Создание и редактирование открываются только по запросу пользователя.
 
-Основная реализация завершена. Выполнена UX-корректировка временных форм, mobile goal form и expanded details. Исправлен дефект clipping/stacking mobile action menus. Добавлен cache-busting frontend assets для актуальной загрузки на устройствах. Ожидает пользовательской проверки.
+Пользовательская проверка успешно завершена: mobile goals/accounts, transient forms, category chips, menu stacking, cache-busting на физическом Android.
 
-### Этап 6. Voice Input v1 — PLANNED
+### Этап 6. Voice Input v1 — IN PROGRESS
 
 Добавить голосовой ввод без обязательного AI API.
 
@@ -319,6 +319,8 @@ Speech-to-Text
 сохранение операции
 
 AI API на данном этапе не использовать.
+
+Реализация Voice Input v1 завершена, ожидает пользовательской проверки на физическом Android.
 
 ### Этап 6.1. Локальный словарь привычек — PLANNED
 
@@ -447,4 +449,5 @@ localStorage → IndexedDB.
 | 2026-08-08 | Этап 2 | Mobile Dashboard + единая сортировка операций (`date` → `createdAt` → индекс) для Dashboard и вкладки «Операции»; helper в `calculations.js` | Syntax/автотесты OK. Пользовательская проверка успешно завершена (newest-first, 100→200→300, reload, приоритет даты). Этап 3 не выполнялся на момент закрытия Этапа 2 |
 | 2026-08-08 | Этап 3 | Quick Add bottom sheet для кнопки «+»: расход/доход, сумма, категория, счёт; дата/член семьи/комментарий в «Дополнительно»; общий helper создания операции (`validateTransactionFields` / `addTransaction`); выбор счёта по `createdAt` | Пользовательская проверка успешно завершена. Этап 4 не выполнялся на момент закрытия Этапа 3 |
 | 2026-08-08 | Этап 4 | Mobile Transaction Feed: мобильная лента операций с группировкой по дате; desktop-таблица сохранена; форма добавления скрыта на mobile вне редактирования; корректировка touch targets `⋯` и порядка Desktop UI (форма → фильтры → таблица) | `npm test` — 24/24; `node --check` transactions/ui/app/calculations/dates/formatting — OK. Пользовательская проверка успешно завершена |
-| 2026-08-08 | Этап 5 | Mobile Goals & Accounts + UX; menu stacking; Quick Add category chips; cache-busting `?v=20260808-2` для CSS/JS | Ожидает проверки на физическом Android / GitHub Pages. Этап 6 не выполнялся |
+| 2026-08-08 | Этап 5 | Mobile Goals & Accounts + UX; menu stacking; Quick Add category chips; cache-busting | Пользовательская проверка успешно завершена. Этап 6 разрешён |
+| 2026-08-08 | Этап 6 | Voice Input v1: SpeechRecognition → local parser → Quick Add draft/preview; без auto-save; `voice-parser.js` / `voice.js`; parser unit tests | Ожидает проверки на физическом Android. Этап 6.1 не выполнялся |

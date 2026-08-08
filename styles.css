@@ -1486,6 +1486,148 @@
             line-height: 1.35;
         }
 
+        .quick-add-voice {
+            display: grid;
+            gap: 10px;
+            margin: 0 0 14px;
+            max-width: 100%;
+        }
+
+        .quick-add-voice__button {
+            min-height: 44px;
+            width: 100%;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+
+        .quick-add-voice__button--listening {
+            border-color: color-mix(in srgb, var(--red) 45%, var(--border));
+            color: var(--text);
+            background: color-mix(in srgb, var(--red) 14%, transparent);
+        }
+
+        .quick-add-voice__privacy {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            line-height: 1.4;
+        }
+
+        .quick-add-voice__privacy--compact {
+            margin-top: -2px;
+        }
+
+        .quick-add-voice__status {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface-subtle);
+            max-width: 100%;
+        }
+
+        .quick-add-voice__listening {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quick-add-voice__dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--red);
+            box-shadow: 0 0 0 0 color-mix(in srgb, var(--red) 55%, transparent);
+            animation: voicePulse 1.2s ease-out infinite;
+        }
+
+        @keyframes voicePulse {
+            0% {
+                box-shadow: 0 0 0 0 color-mix(in srgb, var(--red) 45%, transparent);
+            }
+            70% {
+                box-shadow: 0 0 0 10px transparent;
+            }
+            100% {
+                box-shadow: 0 0 0 0 transparent;
+            }
+        }
+
+        .quick-add-voice__prompt {
+            margin: 8px 0 0;
+            font-weight: 700;
+        }
+
+        .quick-add-voice__example,
+        .quick-add-voice__error {
+            margin: 6px 0 0;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+        }
+
+        .quick-add-voice__error {
+            color: var(--red);
+            font-weight: 600;
+        }
+
+        .quick-add-voice__preview {
+            display: grid;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--card-light);
+            max-width: 100%;
+        }
+
+        .quick-add-voice__preview-label {
+            margin-bottom: 4px;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .quick-add-voice__transcript,
+        .quick-add-voice__summary {
+            margin: 0;
+            font-size: 0.92rem;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+        }
+
+        .quick-add-voice__warnings {
+            margin: 0;
+            padding-left: 18px;
+            color: var(--orange);
+            font-size: 0.82rem;
+            line-height: 1.4;
+        }
+
+        .quick-add-voice__again {
+            min-height: 44px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .mobile-dashboard__voice-wrap {
+            display: none;
+        }
+
+        .mobile-dashboard__voice {
+            width: 100%;
+            min-height: 44px;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+
+        .mobile-dashboard__voice--listening {
+            border-color: color-mix(in srgb, var(--red) 45%, var(--border));
+            background: color-mix(in srgb, var(--red) 12%, transparent);
+        }
+
         .quick-add-amount__control {
             display: flex;
             align-items: baseline;
@@ -2454,6 +2596,11 @@
             .mobile-dashboard__metrics--secondary .mobile-dashboard__metric-label {
                 margin-top: 0;
                 margin-bottom: 2px;
+            }
+
+            .mobile-dashboard__voice-wrap {
+                display: block;
+                max-width: 100%;
             }
 
             .mobile-dashboard__recent-header {

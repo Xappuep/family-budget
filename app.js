@@ -171,6 +171,27 @@
             });
         }
 
+        if (elements.quickAddVoiceButton) {
+            elements.quickAddVoiceButton.addEventListener(
+                "click",
+                handleQuickAddVoiceButtonClick
+            );
+        }
+
+        if (elements.homeVoiceButton) {
+            elements.homeVoiceButton.addEventListener(
+                "click",
+                handleHomeVoiceButtonClick
+            );
+        }
+
+        if (elements.quickAddVoicePreview) {
+            elements.quickAddVoicePreview.addEventListener(
+                "click",
+                handleQuickAddVoicePreviewClick
+            );
+        }
+
         if (elements.closeQuickAddModal) {
             elements.closeQuickAddModal.addEventListener("click", () => {
                 closeQuickAddSheet();
@@ -450,6 +471,10 @@
             resetTransactionForm();
             resetGoalForm();
             resetContributionForm();
+
+            if (typeof initVoiceInput === "function") {
+                initVoiceInput();
+            }
 
             renderAll();
         }

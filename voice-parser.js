@@ -5,17 +5,7 @@
  * Без DOM, state, toast и создания операций.
  */
 
-const VOICE_STOP_WORDS = Object.freeze([
-    "счет",
-    "счёт",
-    "карта",
-    "карты",
-    "карту",
-    "карточка",
-    "карточки",
-    "карточке",
-    "кошелек",
-    "кошелёк",
+const VOICE_PREPOSITIONS = Object.freeze([
     "с",
     "со",
     "на",
@@ -46,12 +36,6 @@ const VOICE_INCOME_MARKERS = Object.freeze([
     "зарплата",
     "подработка",
     "продажи"
-]);
-
-const VOICE_INCOME_CATEGORIES = Object.freeze([
-    "Зарплата",
-    "Подработка",
-    "Продажи"
 ]);
 
 const VOICE_CATEGORY_ALIASES = Object.freeze({
@@ -403,42 +387,139 @@ function extractVoiceCategory(normalized, categories) {
 
 function significantAccountTokens(name) {
     return tokenizeVoiceText(normalizeVoiceText(name)).filter(
-        (token) => !VOICE_STOP_WORDS.includes(token) && token.length > 1
+        (token) => !VOICE_PREPOSITIONS.includes(token) && token.length > 1
+    );
+}
+
+function isAccountTypeToken(token) {
+    const value = normalizeVoiceText(token);
+    return (
+        value.startsWith("счет") ||
+        value.startsWith("карт") ||
+        value.startsWith("кошел")
+    );
+}
+
+/**
+ * Упрощённый stem для падежей: основного→основн, счета→счет, карты→карт.
+ */
+function stemVoiceToken(token) {
+    const value = normalizeVoiceText(token);
+
+    if (!value) {
+        return "";
+    }
+
+    if (value.startsWith("счет")) {
+        return "счет";
+    }
+
+    if (value.startsWith("карт")) {
+        return "карт";
+    }
+
+    if (value.startsWith("кошел")) {
+        return "кошел";
+    }
+
+    const endings = [
+        "ого",
+        "ему",
+        "ому",
+        "ыми",
+        "ими",
+        "ой",
+        "ей",
+        "ая",
+        "ое",
+        "ые",
+        "ие",
+        "ый",
+        "ий",
+        "ов",
+        "ев",
+        "ам",
+        "ям",
+        "ах",
+        "ях",
+        "ом",
+        "ем",
+        "у",
+        "ю",
+        "а",
+        "я",
+        "е",
+        "и",
+        "ы"
+    ];
+
+    for (const ending of endings) {
+        if (
+            value.length - ending.length >= 4 &&
+            value.endsWith(ending)
+        ) {
+            return value.slice(0, -ending.length);
+        }
+    }
+
+    return value;
+}
+
+function voiceTokensMatch(accountToken, speechToken) {
+    const left = normalizeVoiceText(accountToken);
+    const right = normalizeVoiceText(speechToken);
+
+    if (!left || !right) {
+        return false;
+    }
+
+    if (left === right) {
+        return true;
+    }
+
+    const leftStem = stemVoiceToken(left);
+    const rightStem = stemVoiceToken(right);
+
+    if (leftStem && leftStem === rightStem && leftStem.length >= 4) {
+        return true;
+    }
+
+    if (left.length < 4 || right.length < 4) {
+        return false;
+    }
+
+    const prefixLength = Math.min(left.length, right.length, 6);
+
+    return (
+        left.slice(0, prefixLength) === right.slice(0, prefixLength) ||
+        left.startsWith(right.slice(0, 4)) ||
+        right.startsWith(left.slice(0, 4))
     );
 }
 
 function scoreAccountMatch(normalizedSpeech, account) {
     const accountTokens = significantAccountTokens(account?.name || "");
+    const speechTokens = tokenizeVoiceText(normalizedSpeech).filter(
+        (token) => !VOICE_PREPOSITIONS.includes(token) && token.length > 1
+    );
 
-    if (accountTokens.length === 0) {
+    if (accountTokens.length === 0 || speechTokens.length === 0) {
         return 0;
     }
 
     let score = 0;
 
-    for (const token of accountTokens) {
-        if (normalizedSpeech.includes(token)) {
-            score += token.length >= 5 ? 3 : 2;
+    for (const accountToken of accountTokens) {
+        const matched = speechTokens.some((speechToken) =>
+            voiceTokensMatch(accountToken, speechToken)
+        );
+
+        if (!matched) {
             continue;
         }
 
-        // Простой префиксный match для падежей: основного / основной, тестовой / тестовая.
-        const prefixHit = tokenizeVoiceText(normalizedSpeech).some((speechToken) => {
-            if (speechToken.length < 4 || token.length < 4) {
-                return false;
-            }
-
-            const short = Math.min(speechToken.length, token.length, 6);
-            return (
-                speechToken.slice(0, short) === token.slice(0, short) ||
-                speechToken.startsWith(token.slice(0, 4)) ||
-                token.startsWith(speechToken.slice(0, 4))
-            );
-        });
-
-        if (prefixHit) {
-            score += 1;
-        }
+        // Descriptor (основной, тестовая, резерв) весит больше type-noun (счёт, карта).
+        score += isAccountTypeToken(accountToken) ? 1 : 3;
     }
 
     return score;
@@ -489,7 +570,28 @@ function extractVoiceAccount(normalized, accounts, preferredAccountId) {
     };
 }
 
-function extractVoiceType(normalized, category) {
+function categoryMembership(category, categories) {
+    if (!category) {
+        return {
+            inExpense: false,
+            inIncome: false
+        };
+    }
+
+    const expense = Array.isArray(categories?.expense) ? categories.expense : [];
+    const income = Array.isArray(categories?.income) ? categories.income : [];
+
+    return {
+        inExpense: expense.includes(category),
+        inIncome: income.includes(category)
+    };
+}
+
+/**
+ * Явные markers имеют приоритет. Иначе type по membership в
+ * context.categories.expense / income (без отдельного expense hardcode).
+ */
+function extractVoiceType(normalized, category, categories) {
     const hasExpense = VOICE_EXPENSE_MARKERS.some((marker) =>
         normalized.includes(marker)
     );
@@ -511,17 +613,26 @@ function extractVoiceType(normalized, category) {
         };
     }
 
-    if (category && VOICE_INCOME_CATEGORIES.includes(category)) {
-        return {
-            type: "income",
-            recognized: true
-        };
-    }
-
     if (hasIncome && hasExpense) {
         return {
             type: "expense",
             recognized: false
+        };
+    }
+
+    const membership = categoryMembership(category, categories);
+
+    if (membership.inExpense && !membership.inIncome) {
+        return {
+            type: "expense",
+            recognized: true
+        };
+    }
+
+    if (membership.inIncome && !membership.inExpense) {
+        return {
+            type: "income",
+            recognized: true
         };
     }
 
@@ -557,7 +668,11 @@ function parseVoiceTransaction(text, context = {}) {
         accounts,
         preferredAccountId
     );
-    const typeInfo = extractVoiceType(normalized, categoryInfo.category);
+    const typeInfo = extractVoiceType(
+        normalized,
+        categoryInfo.category,
+        categories
+    );
 
     if (!typeInfo.recognized) {
         warnings.push("Тип операции не распознан — выбран расход.");

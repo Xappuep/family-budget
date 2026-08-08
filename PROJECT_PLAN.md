@@ -320,7 +320,7 @@ Speech-to-Text
 
 AI API на данном этапе не использовать.
 
-Реализация Voice Input v1 завершена, ожидает пользовательской проверки на физическом Android.
+Реализация Voice Input v1 завершена. Основной Voice Flow успешно проверен на физическом Android. Выполняется финальная корректировка type/category inference и account matching.
 
 ### Этап 6.1. Локальный словарь привычек — PLANNED
 
@@ -450,4 +450,4 @@ localStorage → IndexedDB.
 | 2026-08-08 | Этап 3 | Quick Add bottom sheet для кнопки «+»: расход/доход, сумма, категория, счёт; дата/член семьи/комментарий в «Дополнительно»; общий helper создания операции (`validateTransactionFields` / `addTransaction`); выбор счёта по `createdAt` | Пользовательская проверка успешно завершена. Этап 4 не выполнялся на момент закрытия Этапа 3 |
 | 2026-08-08 | Этап 4 | Mobile Transaction Feed: мобильная лента операций с группировкой по дате; desktop-таблица сохранена; форма добавления скрыта на mobile вне редактирования; корректировка touch targets `⋯` и порядка Desktop UI (форма → фильтры → таблица) | `npm test` — 24/24; `node --check` transactions/ui/app/calculations/dates/formatting — OK. Пользовательская проверка успешно завершена |
 | 2026-08-08 | Этап 5 | Mobile Goals & Accounts + UX; menu stacking; Quick Add category chips; cache-busting | Пользовательская проверка успешно завершена. Этап 6 разрешён |
-| 2026-08-08 | Этап 6 | Voice Input v1: SpeechRecognition → local parser → Quick Add draft/preview; без auto-save; `voice-parser.js` / `voice.js`; parser unit tests | Ожидает проверки на физическом Android. Этап 6.1 не выполнялся |
+| 2026-08-08 | Этап 6 | Voice Input v1; фикс type inference по `categories.expense/income` и account matching (счёт vs резерв) | Основной flow на Android OK; идёт финальная корректировка parser. Этап 6.1 не выполнялся |

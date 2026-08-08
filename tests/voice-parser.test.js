@@ -17,6 +17,12 @@ function createVoiceParserHarness() {
         vm.runInContext(source, context);
     });
 
+    // const из constants.js виден скриптам в context, но не как property объекта.
+    vm.runInContext(
+        "this.QUICK_ADD_CATEGORIES = QUICK_ADD_CATEGORIES;",
+        context
+    );
+
     return context;
 }
 
@@ -39,12 +45,36 @@ function parse(text, overrides = {}) {
 test("voice: Продукты 2450", () => {
     const result = parse("Продукты 2450 рублей с основного счёта");
     assert.equal(result.type, "expense");
+    assert.equal(result.recognized.type, true);
     assert.equal(result.amount, 2450);
     assert.equal(result.category, "Продукты");
     assert.equal(result.accountId, "main");
     assert.equal(result.date, "2026-08-08");
     assert.equal(result.recognized.amount, true);
     assert.equal(result.recognized.category, true);
+    assert.ok(
+        !result.warnings.some((warning) =>
+            warning.includes("Тип операции не распознан")
+        )
+    );
+});
+
+test("voice: expense category alone recognizes type", () => {
+    const result = parse("Продукты 2450 рублей");
+    assert.equal(result.type, "expense");
+    assert.equal(result.recognized.type, true);
+    assert.ok(
+        !result.warnings.some((warning) =>
+            warning.includes("Тип операции не распознан")
+        )
+    );
+});
+
+test("voice: Транспорт recognizes expense type", () => {
+    const result = parse("Транспорт 700 рублей");
+    assert.equal(result.type, "expense");
+    assert.equal(result.recognized.type, true);
+    assert.equal(result.category, "Транспорт");
 });
 
 test("voice: 2 450 рублей with spaced thousands", () => {
@@ -79,9 +109,36 @@ test("voice: income keyword", () => {
 test("voice: Зарплата implies income", () => {
     const result = parse("Зарплата 50000 рублей на основной счёт");
     assert.equal(result.type, "income");
+    assert.equal(result.recognized.type, true);
     assert.equal(result.category, "Зарплата");
     assert.equal(result.amount, 50000);
     assert.equal(result.accountId, "main");
+});
+
+test("voice: shared category Другое without markers stays uncertain type", () => {
+    const result = parse("Другое 5000 рублей");
+    assert.equal(result.category, "Другое");
+    assert.equal(result.type, "expense");
+    assert.equal(result.recognized.type, false);
+    assert.ok(
+        result.warnings.some((warning) =>
+            warning.includes("Тип операции не распознан")
+        )
+    );
+});
+
+test("voice: explicit income marker beats shared category", () => {
+    const result = parse("Доход 5000 рублей другое");
+    assert.equal(result.type, "income");
+    assert.equal(result.recognized.type, true);
+    assert.equal(result.category, "Другое");
+});
+
+test("voice: explicit expense marker beats shared category", () => {
+    const result = parse("Расход 5000 рублей другое");
+    assert.equal(result.type, "expense");
+    assert.equal(result.recognized.type, true);
+    assert.equal(result.category, "Другое");
 });
 
 test("voice: yesterday", () => {
@@ -135,6 +192,23 @@ test("voice: ambiguous account", () => {
     assert.equal(result.recognized.account, false);
     assert.ok(
         result.warnings.some((warning) =>
+            warning.includes("однозначно определить счёт")
+        )
+    );
+});
+
+test("voice: основного счёта beats Основной резерв", () => {
+    const result = parse("Продукты 600 рублей с основного счёта", {
+        accounts: [
+            { id: "a", name: "Основной счёт" },
+            { id: "b", name: "Основной резерв" }
+        ],
+        preferredAccountId: "a"
+    });
+    assert.equal(result.accountId, "a");
+    assert.equal(result.recognized.account, true);
+    assert.ok(
+        !result.warnings.some((warning) =>
             warning.includes("однозначно определить счёт")
         )
     );

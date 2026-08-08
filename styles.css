@@ -729,6 +729,83 @@
             color: var(--red);
         }
 
+        /* Shared mobile action menu (цели, вклады, счета, переводы) */
+        .mobile-action-menu {
+            position: relative;
+        }
+
+        .mobile-action-menu__toggle {
+            display: grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            min-height: 44px;
+            margin: -8px -6px -4px 0;
+            padding: 0;
+            border: 0;
+            border-radius: 10px;
+            color: var(--text-muted);
+            background: transparent;
+            font: inherit;
+            font-size: 1.2rem;
+            line-height: 1;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .mobile-action-menu__toggle:hover,
+        .mobile-action-menu__toggle:focus-visible {
+            color: var(--text);
+            background: var(--surface-subtle);
+            outline: none;
+        }
+
+        .mobile-action-menu__toggle:focus-visible {
+            box-shadow: 0 0 0 2px var(--focus-ring);
+        }
+
+        .mobile-action-menu__panel {
+            position: absolute;
+            top: calc(100% - 2px);
+            right: 0;
+            left: auto;
+            z-index: 20;
+            min-width: 168px;
+            max-width: min(220px, calc(100vw - 24px));
+            padding: 6px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--card);
+            box-shadow: var(--shadow);
+        }
+
+        .mobile-action-menu__item {
+            display: block;
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 0;
+            border-radius: 8px;
+            color: var(--text);
+            background: transparent;
+            font: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .mobile-action-menu__item:hover,
+        .mobile-action-menu__item:focus-visible {
+            background: var(--surface-subtle);
+            outline: none;
+        }
+
+        .mobile-action-menu__item--danger {
+            color: var(--red);
+        }
+
         .mobile-tx-empty {
             padding: 18px 4px 8px;
         }
@@ -770,6 +847,101 @@
 
         #transactions .mobile-tx-feed {
             order: 5;
+        }
+
+        /* Desktop: contributions form → filters → table */
+        #contributions.section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #contributions .section__header {
+            order: 1;
+        }
+
+        #contributions .desktop-contribution-form {
+            order: 2;
+        }
+
+        #contributions .contributions-filters {
+            order: 3;
+            margin-top: 16px;
+        }
+
+        #contributions .desktop-contributions-table {
+            order: 4;
+        }
+
+        #contributions .mobile-tx-feed {
+            order: 5;
+        }
+
+        /* Desktop: accounts forms → grid → table */
+        #accounts.section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #accounts .section__header {
+            order: 1;
+        }
+
+        #accounts .mobile-section-toolbar {
+            order: 2;
+        }
+
+        #accounts .accounts-layout {
+            order: 3;
+        }
+
+        #accounts .accounts-grid {
+            order: 4;
+        }
+
+        #accounts .desktop-transfers-table {
+            order: 5;
+        }
+
+        #accounts .mobile-tx-feed {
+            order: 6;
+        }
+
+        .mobile-section-toolbar {
+            display: none;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .mobile-section-toolbar .button {
+            min-height: 44px;
+            flex: 1 1 auto;
+        }
+
+        .goal-card__hint {
+            margin-top: 10px;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .goal-card__summary {
+            min-width: 0;
+        }
+
+        .account-card__menu {
+            display: none;
+        }
+
+        @media (min-width: 621px) {
+            .mobile-only,
+            .mobile-only-action {
+                display: none !important;
+            }
+
+            .mobile-tx-feed {
+                display: none !important;
+            }
         }
 
         /* =========================================================
@@ -1786,6 +1958,161 @@
                 order: 3;
             }
 
+            /* ---------- Mobile Goals & Accounts (Этап 5) ---------- */
+
+            .mobile-section-toolbar.mobile-only-action {
+                display: flex !important;
+            }
+
+            #goals .section__header {
+                gap: 10px;
+            }
+
+            #goals .desktop-goal-form:not(.is-mobile-open),
+            #contributions .desktop-contribution-form:not(.is-mobile-open),
+            #accounts .desktop-account-form:not(.is-mobile-open),
+            #accounts .desktop-transfer-form:not(.is-mobile-open) {
+                display: none !important;
+            }
+
+            #accounts .accounts-layout:not(:has(.is-mobile-open)) {
+                display: none;
+            }
+
+            #accounts .accounts-layout:has(.is-mobile-open) {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 10px;
+                margin-bottom: 10px;
+                order: 5;
+            }
+
+            #accounts .desktop-account-form.is-mobile-open,
+            #accounts .desktop-transfer-form.is-mobile-open,
+            #goals .desktop-goal-form.is-mobile-open,
+            #contributions .desktop-contribution-form.is-mobile-open {
+                display: block !important;
+            }
+
+            #contributions.section {
+                gap: 10px;
+            }
+
+            #contributions .desktop-only-copy {
+                display: none;
+            }
+
+            #contributions .contributions-filters {
+                order: 1;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+
+            #contributions .contributions-filters #contributionSearch {
+                grid-column: 1 / -1;
+            }
+
+            #contributions .contributions-filters #clearContributionFilters {
+                grid-column: 1 / -1;
+                width: 100%;
+                min-height: 44px;
+            }
+
+            #contributions .desktop-contribution-form {
+                order: 2;
+                margin: 0;
+            }
+
+            #contributions .desktop-contributions-table {
+                display: none !important;
+            }
+
+            #contributions .mobile-tx-feed {
+                display: block;
+                order: 3;
+            }
+
+            #accounts .section__header {
+                margin-bottom: 0;
+            }
+
+            #accounts .mobile-section-toolbar {
+                order: 2;
+            }
+
+            #accounts .accounts-grid {
+                order: 3;
+                grid-template-columns: 1fr;
+                margin-bottom: 8px;
+            }
+
+            #accounts .mobile-tx-feed {
+                display: block;
+                order: 4;
+            }
+
+            #accounts .desktop-transfers-table {
+                display: none !important;
+            }
+
+            .account-card__delete-desktop {
+                display: none !important;
+            }
+
+            .account-card__menu.mobile-only {
+                display: block !important;
+            }
+
+            .goal-card {
+                overflow-x: clip;
+                max-width: 100%;
+            }
+
+            .goal-card__details {
+                display: none;
+                margin-top: 12px;
+            }
+
+            .goal-card.is-expanded .goal-card__details {
+                display: block;
+            }
+
+            .goal-card__actions {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .goal-card__actions > .button.mobile-only {
+                display: inline-flex !important;
+                min-height: 44px;
+            }
+
+            .goal-card__actions .mobile-action-menu.mobile-only {
+                display: block !important;
+            }
+
+            .goal-card__actions .desktop-only-action {
+                display: none !important;
+            }
+
+            .credit-schedule__table-wrap {
+                max-width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #goals,
+            #contributions,
+            #accounts {
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
             /* ---------- Mobile Dashboard (Этап 2) ---------- */
 
             #summary.section {
@@ -2052,7 +2379,10 @@
             .mobile-tools-section,
             .mobile-dashboard,
             .quick-add-sheet,
-            .mobile-tx-feed {
+            .mobile-tx-feed,
+            .mobile-only,
+            .mobile-only-action,
+            .mobile-section-toolbar {
                 display: none !important;
             }
 
@@ -2193,7 +2523,7 @@
 
 .accounts-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
 .accounts-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
-.account-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px; }
+.account-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px; position: relative; }
 .account-card span { display: block; margin-bottom: 7px; color: var(--text-muted); font-size: 13px; font-weight: 700; }
 .account-card strong { display: block; font-size: 22px; }
 @media (max-width: 800px) { .accounts-layout, .accounts-grid { grid-template-columns: 1fr; } }

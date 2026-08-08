@@ -481,26 +481,10 @@
         }
 
         function closeMobileTransactionMenus(exceptPanel = null) {
-            if (!elements.mobileTransactionsList) {
-                return;
-            }
-
-            elements.mobileTransactionsList
-                .querySelectorAll(".mobile-tx-card__menu-panel")
-                .forEach((panel) => {
-                    if (panel === exceptPanel) {
-                        return;
-                    }
-
-                    panel.classList.add("hidden");
-                    const toggle = panel
-                        .closest(".mobile-tx-card__menu")
-                        ?.querySelector("[data-action='toggle-tx-menu']");
-
-                    if (toggle) {
-                        toggle.setAttribute("aria-expanded", "false");
-                    }
-                });
+            closeMobileActionMenus(
+                elements.mobileTransactionsList || document,
+                exceptPanel
+            );
         }
 
         function buildMobileTransactionCard(transaction) {
@@ -539,9 +523,9 @@
                         }">
                             ${amountPrefix}${escapeHTML(formatMoney(transaction.amount))}
                         </div>
-                        <div class="mobile-tx-card__menu">
+                        <div class="mobile-tx-card__menu mobile-action-menu">
                             <button
-                                class="mobile-tx-card__menu-toggle"
+                                class="mobile-tx-card__menu-toggle mobile-action-menu__toggle"
                                 type="button"
                                 data-action="toggle-tx-menu"
                                 aria-label="Действия с операцией"
@@ -550,9 +534,9 @@
                             >
                                 ⋯
                             </button>
-                            <div class="mobile-tx-card__menu-panel hidden" role="menu">
+                            <div class="mobile-tx-card__menu-panel mobile-action-menu__panel hidden" role="menu">
                                 <button
-                                    class="mobile-tx-card__menu-item"
+                                    class="mobile-tx-card__menu-item mobile-action-menu__item"
                                     type="button"
                                     role="menuitem"
                                     data-action="edit-transaction"
@@ -561,7 +545,7 @@
                                     Редактировать
                                 </button>
                                 <button
-                                    class="mobile-tx-card__menu-item mobile-tx-card__menu-item--danger"
+                                    class="mobile-tx-card__menu-item mobile-tx-card__menu-item--danger mobile-action-menu__item mobile-action-menu__item--danger"
                                     type="button"
                                     role="menuitem"
                                     data-action="delete-transaction"
@@ -751,15 +735,17 @@
 
             if (action === "toggle-tx-menu") {
                 const panel = button
-                    .closest(".mobile-tx-card__menu")
-                    ?.querySelector(".mobile-tx-card__menu-panel");
+                    .closest(".mobile-tx-card__menu, .mobile-action-menu")
+                    ?.querySelector(
+                        ".mobile-tx-card__menu-panel, .mobile-action-menu__panel"
+                    );
 
                 if (!panel) {
                     return;
                 }
 
                 const willOpen = panel.classList.contains("hidden");
-                closeMobileTransactionMenus(willOpen ? panel : null);
+                closeMobileActionMenus(null, willOpen ? panel : null);
                 panel.classList.toggle("hidden", !willOpen);
                 button.setAttribute(
                     "aria-expanded",

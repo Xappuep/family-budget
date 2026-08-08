@@ -34,9 +34,66 @@
         });
         elements.accountForm.addEventListener("submit", handleAccountSubmit);
         elements.transferForm.addEventListener("submit", handleTransferSubmit);
-        elements.accountsGrid.addEventListener("click", (event) => { const button = event.target.closest("[data-delete-account]"); if (button) deleteAccount(button.dataset.deleteAccount); });
-        elements.transfersTableBody.addEventListener("click", (event) => { const button = event.target.closest("[data-delete-transfer]"); if (button) deleteTransfer(button.dataset.deleteTransfer); });
+        elements.accountsGrid.addEventListener("click", (event) => {
+            const menuToggle = event.target.closest("[data-action='toggle-mobile-menu']");
 
+            if (menuToggle && elements.accountsGrid.contains(menuToggle)) {
+                const panel = menuToggle
+                    .closest(".mobile-action-menu")
+                    ?.querySelector(".mobile-action-menu__panel");
+
+                if (!panel) {
+                    return;
+                }
+
+                const willOpen = panel.classList.contains("hidden");
+                closeMobileActionMenus(null, willOpen ? panel : null);
+                panel.classList.toggle("hidden", !willOpen);
+                menuToggle.setAttribute(
+                    "aria-expanded",
+                    willOpen ? "true" : "false"
+                );
+                return;
+            }
+
+            const button = event.target.closest("[data-delete-account]");
+            if (button) {
+                closeMobileActionMenus();
+                deleteAccount(button.dataset.deleteAccount);
+            }
+        });
+        elements.transfersTableBody.addEventListener("click", (event) => {
+            const button = event.target.closest("[data-delete-transfer]");
+            if (button) deleteTransfer(button.dataset.deleteTransfer);
+        });
+
+        if (elements.mobileTransfersList) {
+            elements.mobileTransfersList.addEventListener(
+                "click",
+                handleMobileTransfersClick
+            );
+        }
+
+        if (elements.openMobileAccountForm) {
+            elements.openMobileAccountForm.addEventListener(
+                "click",
+                openMobileAccountForm
+            );
+        }
+
+        if (elements.openMobileTransferForm) {
+            elements.openMobileTransferForm.addEventListener(
+                "click",
+                openMobileTransferForm
+            );
+        }
+
+        if (elements.openMobileGoalForm) {
+            elements.openMobileGoalForm.addEventListener(
+                "click",
+                openMobileGoalForm
+            );
+        }
         elements.transactionForm.addEventListener(
             "submit",
             handleTransactionSubmit
@@ -131,7 +188,7 @@
                 return;
             }
 
-            closeMobileTransactionMenus();
+            closeMobileActionMenus();
 
             if (
                 elements.quickContributionModal &&
@@ -170,9 +227,20 @@
             );
         }
 
+        if (elements.mobileContributionsList) {
+            elements.mobileContributionsList.addEventListener(
+                "click",
+                handleMobileContributionsClick
+            );
+        }
+
         document.addEventListener("click", (event) => {
-            if (!event.target.closest(".mobile-tx-card__menu")) {
-                closeMobileTransactionMenus();
+            if (
+                !event.target.closest(
+                    ".mobile-action-menu, .mobile-tx-card__menu"
+                )
+            ) {
+                closeMobileActionMenus();
             }
         });
 
@@ -188,15 +256,50 @@
 
             const { action, id } = button.dataset;
 
+            if (action === "toggle-mobile-menu") {
+                const panel = button
+                    .closest(".mobile-action-menu")
+                    ?.querySelector(".mobile-action-menu__panel");
+
+                if (!panel) {
+                    return;
+                }
+
+                const willOpen = panel.classList.contains("hidden");
+                closeMobileActionMenus(null, willOpen ? panel : null);
+                panel.classList.toggle("hidden", !willOpen);
+                button.setAttribute(
+                    "aria-expanded",
+                    willOpen ? "true" : "false"
+                );
+                return;
+            }
+
+            if (action === "toggle-goal-details") {
+                const card = button.closest(".goal-card");
+
+                if (!card) {
+                    return;
+                }
+
+                const willExpand = !card.classList.contains("is-expanded");
+                card.classList.toggle("is-expanded", willExpand);
+                button.textContent = willExpand ? "Свернуть" : "Подробнее";
+                return;
+            }
+
             if (action === "quick-contribution") {
+                closeMobileActionMenus();
                 openQuickContributionModal(id);
             }
 
             if (action === "edit-goal") {
+                closeMobileActionMenus();
                 editGoal(id);
             }
 
             if (action === "delete-goal") {
+                closeMobileActionMenus();
                 deleteGoal(id);
             }
         }

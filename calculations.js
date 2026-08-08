@@ -227,27 +227,32 @@
         /**
          * Корректный createdAt операции или пустая строка для legacy-записей.
          */
-        function getTransactionCreatedAtValue(transaction) {
-            return typeof transaction?.createdAt === "string" && transaction.createdAt
-                ? transaction.createdAt
+        function getRecordCreatedAtValue(record) {
+            return typeof record?.createdAt === "string" && record.createdAt
+                ? record.createdAt
                 : "";
         }
 
+        function getTransactionCreatedAtValue(transaction) {
+            return getRecordCreatedAtValue(transaction);
+        }
+
         /**
-         * Единый comparator: сначала date ↓, затем createdAt ↓, иначе индекс в массиве ↓.
-         * Элементы: { transaction, index }. Не мутирует state.
+         * Единый comparator для записей с date/createdAt:
+         * date ↓, затем createdAt ↓, иначе индекс в массиве ↓.
+         * Элементы: { record, index }. Не мутирует state.
          */
-        function compareTransactionsNewestFirst(first, second) {
-            const firstDate = String(first.transaction?.date || "");
-            const secondDate = String(second.transaction?.date || "");
+        function compareRecordsNewestFirst(first, second) {
+            const firstDate = String(first.record?.date || "");
+            const secondDate = String(second.record?.date || "");
             const byDate = secondDate.localeCompare(firstDate);
 
             if (byDate !== 0) {
                 return byDate;
             }
 
-            const firstCreated = getTransactionCreatedAtValue(first.transaction);
-            const secondCreated = getTransactionCreatedAtValue(second.transaction);
+            const firstCreated = getRecordCreatedAtValue(first.record);
+            const secondCreated = getRecordCreatedAtValue(second.record);
 
             if (firstCreated && secondCreated) {
                 const byCreated = secondCreated.localeCompare(firstCreated);
@@ -261,14 +266,40 @@
         }
 
         /**
-         * Копия списка операций, отсортированная newest-first.
+         * Копия списка записей, отсортированная newest-first.
          * Индексы берутся из исходного массива (важно для legacy без createdAt).
          */
+        function sortRecordsNewestFirst(records) {
+            return (records || [])
+                .map((record, index) => ({ record, index }))
+                .sort(compareRecordsNewestFirst)
+                .map(({ record }) => record);
+        }
+
+        /**
+         * Comparator операций: элементы { transaction, index }.
+         * Тонкая обёртка над compareRecordsNewestFirst.
+         */
+        function compareTransactionsNewestFirst(first, second) {
+            return compareRecordsNewestFirst(
+                { record: first.transaction, index: first.index },
+                { record: second.transaction, index: second.index }
+            );
+        }
+
+        /**
+         * Копия списка операций, отсортированная newest-first.
+         */
         function sortTransactionsNewestFirst(transactions) {
-            return transactions
-                .map((transaction, index) => ({ transaction, index }))
-                .sort(compareTransactionsNewestFirst)
-                .map(({ transaction }) => transaction);
+            return sortRecordsNewestFirst(transactions);
+        }
+
+        function sortContributionsNewestFirst(contributions) {
+            return sortRecordsNewestFirst(contributions);
+        }
+
+        function sortTransfersNewestFirst(transfers) {
+            return sortRecordsNewestFirst(transfers);
         }
 
         /**
@@ -334,29 +365,39 @@
         }
 
         /**
-         * Группирует уже отсортированный список операций по календарной дате.
+         * Группирует уже отсортированный список записей по календарной дате.
          * Не мутирует исходный массив и не меняет порядок внутри групп.
          * Подпись дня (Сегодня/Вчера) добавляется на уровне UI.
          */
-        function groupTransactionsByDate(transactions) {
+        function groupRecordsByDate(records) {
             const groups = [];
 
-            (transactions || []).forEach((transaction) => {
-                const date = String(transaction?.date || "");
+            (records || []).forEach((record) => {
+                const date = String(record?.date || "");
                 const lastGroup = groups[groups.length - 1];
 
                 if (!lastGroup || lastGroup.date !== date) {
                     groups.push({
                         date,
-                        transactions: [transaction]
+                        records: [record]
                     });
                     return;
                 }
 
-                lastGroup.transactions.push(transaction);
+                lastGroup.records.push(record);
             });
 
             return groups;
+        }
+
+        /**
+         * Группирует операции по дате. Сохраняет прежний контракт { date, transactions }.
+         */
+        function groupTransactionsByDate(transactions) {
+            return groupRecordsByDate(transactions).map((group) => ({
+                date: group.date,
+                transactions: group.records
+            }));
         }
 
         function calculateSummary(dateRange = null) {

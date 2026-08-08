@@ -85,6 +85,8 @@
             accountOpeningBalance: document.getElementById("accountOpeningBalance"),
             accountMessage: document.getElementById("accountMessage"),
             accountsGrid: document.getElementById("accountsGrid"),
+            openMobileAccountForm: document.getElementById("openMobileAccountForm"),
+            openMobileTransferForm: document.getElementById("openMobileTransferForm"),
             transferForm: document.getElementById("transferForm"),
             transferDate: document.getElementById("transferDate"),
             transferFrom: document.getElementById("transferFrom"),
@@ -94,6 +96,11 @@
             transferMessage: document.getElementById("transferMessage"),
             transfersTableBody: document.getElementById("transfersTableBody"),
             transfersEmptyState: document.getElementById("transfersEmptyState"),
+            mobileTransfersFeed: document.getElementById("mobileTransfersFeed"),
+            mobileTransfersList: document.getElementById("mobileTransfersList"),
+            mobileTransfersEmpty: document.getElementById("mobileTransfersEmpty"),
+            mobileTransfersEmptyTitle: document.getElementById("mobileTransfersEmptyTitle"),
+            mobileTransfersEmptyText: document.getElementById("mobileTransfersEmptyText"),
             transactionForm: document.getElementById("transactionForm"),
             transactionFormTitle: document.getElementById("transactionFormTitle"),
             transactionId: document.getElementById("transactionId"),
@@ -141,6 +148,7 @@
             goalComment: document.getElementById("goalComment"),
             goalMessage: document.getElementById("goalMessage"),
             cancelGoalEdit: document.getElementById("cancelGoalEdit"),
+            openMobileGoalForm: document.getElementById("openMobileGoalForm"),
             depositsGrid: document.getElementById("depositsGrid"),
             creditsGrid: document.getElementById("creditsGrid"),
             depositsEmptyState: document.getElementById("depositsEmptyState"),
@@ -165,6 +173,11 @@
             contributionGoalFilter: document.getElementById("contributionGoalFilter"),
             contributionMonthFilter: document.getElementById("contributionMonthFilter"),
             clearContributionFilters: document.getElementById("clearContributionFilters"),
+            mobileContributionsFeed: document.getElementById("mobileContributionsFeed"),
+            mobileContributionsList: document.getElementById("mobileContributionsList"),
+            mobileContributionsEmpty: document.getElementById("mobileContributionsEmpty"),
+            mobileContributionsEmptyTitle: document.getElementById("mobileContributionsEmptyTitle"),
+            mobileContributionsEmptyText: document.getElementById("mobileContributionsEmptyText"),
 
             expenseAnalytics: document.getElementById("expenseAnalytics"),
             incomeAnalytics: document.getElementById("incomeAnalytics"),
@@ -287,6 +300,34 @@
             }
 
             setMobileTab(tab);
+        }
+
+        /**
+         * Закрывает мобильные action-меню (цели, вклады, переводы, операции).
+         */
+        function closeMobileActionMenus(rootOrNull = null, exceptPanel = null) {
+            const root = rootOrNull || document;
+
+            root
+                .querySelectorAll(
+                    ".mobile-action-menu__panel, .mobile-tx-card__menu-panel"
+                )
+                .forEach((panel) => {
+                    if (panel === exceptPanel) {
+                        return;
+                    }
+
+                    panel.classList.add("hidden");
+                    const toggle = panel
+                        .closest(".mobile-action-menu, .mobile-tx-card__menu")
+                        ?.querySelector(
+                            ".mobile-action-menu__toggle, .mobile-tx-card__menu-toggle, [data-action='toggle-mobile-menu'], [data-action='toggle-tx-menu']"
+                        );
+
+                    if (toggle) {
+                        toggle.setAttribute("aria-expanded", "false");
+                    }
+                });
         }
 
         /**

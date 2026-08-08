@@ -205,6 +205,7 @@ const goalAmountSnapshot = new Map();
             elements.cancelGoalEdit.classList.remove("hidden");
             showFormMessage(elements.goalMessage, "");
 
+            elements.goalForm.classList.add("is-mobile-open");
             elements.goalForm.scrollIntoView({
                 behavior: "smooth",
                 block: "center"
@@ -267,8 +268,22 @@ const goalAmountSnapshot = new Map();
             elements.goalCapitalization.value = "monthly";
             elements.goalFormTitle.textContent = "Добавить финансовую цель";
             elements.cancelGoalEdit.classList.add("hidden");
+            elements.goalForm.classList.remove("is-mobile-open");
             updateGoalFormByType();
             showFormMessage(elements.goalMessage, "");
+        }
+
+        function openMobileGoalForm() {
+            resetGoalForm();
+            elements.goalForm.classList.add("is-mobile-open");
+            elements.goalForm.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+
+            window.setTimeout(() => {
+                elements.goalName.focus();
+            }, 50);
         }
 
         function sortGoals(goals) {
@@ -326,6 +341,10 @@ const goalAmountSnapshot = new Map();
             const futureDepositInterest = deadlineCalculation
                 ? Math.max(deadlineCalculation.interest - depositCalculation.interest, 0)
                 : null;
+            const creditMonthlyHint =
+                !isDeposit && creditSchedule?.rows?.length
+                    ? creditSchedule.monthlyPayment
+                    : null;
 
             const card = document.createElement("article");
             card.className = `card goal-card ${isDeposit ? "goal-card--deposit" : "goal-card--credit"}`;
@@ -340,156 +359,181 @@ const goalAmountSnapshot = new Map();
             goalAmountSnapshot.set(goal.id, currentAmount);
 
             card.innerHTML = `
-                <div class="goal-card__header">
-                    <div>
-                        <h3>${escapeHTML(goal.name)}</h3>
-
-                        <div class="goal-card__deadline">
+                <div class="goal-card__summary">
+                    <div class="goal-card__header">
+                        <div>
+                            <h3>${escapeHTML(goal.name)}</h3>
                             ${
                                 goal.deadline
-                                    ? `${isDeposit ? "Срок" : "Закрытие"}: ${escapeHTML(formatDate(goal.deadline))}`
-                                    : "Срок не установлен"
+                                    ? `<div class="goal-card__deadline">${
+                                          isDeposit ? "Срок" : "Закрытие"
+                                      }: ${escapeHTML(formatDate(goal.deadline))}</div>`
+                                    : ""
                             }
                         </div>
+
+                        <span class="badge ${isDeposit ? "badge--goal" : "badge--credit"}">
+                            ${percentage.toFixed(0)}%
+                        </span>
                     </div>
 
-                    <span class="badge ${isDeposit ? "badge--goal" : "badge--credit"}">
-                        ${percentage.toFixed(0)}%
-                    </span>
-                </div>
-
-                <div class="goal-card__numbers">
-                    <div>
-                        <span>${isDeposit ? "Накоплено" : "Погашено"}</span><br>
-                        <strong>${escapeHTML(formatMoney(currentAmount))}</strong>
+                    <div class="goal-card__numbers">
+                        ${
+                            isDeposit
+                                ? `
+                            <div>
+                                <span>Накоплено</span><br>
+                                <strong>${escapeHTML(formatMoney(currentAmount))}</strong>
+                            </div>
+                            <div style="text-align: right;">
+                                <span>Цель</span><br>
+                                <strong>${escapeHTML(formatMoney(goal.target))}</strong>
+                            </div>
+                        `
+                                : `
+                            <div>
+                                <span>Погашено</span><br>
+                                <strong>${escapeHTML(formatMoney(currentAmount))}</strong>
+                            </div>
+                            <div style="text-align: right;">
+                                <span>Остаток</span><br>
+                                <strong>${escapeHTML(formatMoney(remainingAmount))}</strong>
+                            </div>
+                        `
+                        }
                     </div>
 
-                    <div style="text-align: right;">
-                        <span>${isDeposit ? "Цель" : "Сумма кредита"}</span><br>
-                        <strong>${escapeHTML(formatMoney(goal.target))}</strong>
-                    </div>
-                </div>
-
-                <div
-                    class="progress"
-                    role="progressbar"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                    aria-valuenow="${percentage.toFixed(0)}"
-                >
                     <div
-                        class="progress__bar"
-                        style="width: ${percentage}%"
-                    ></div>
+                        class="progress"
+                        role="progressbar"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        aria-valuenow="${percentage.toFixed(0)}"
+                    >
+                        <div
+                            class="progress__bar"
+                            style="width: ${percentage}%"
+                        ></div>
+                    </div>
+
+                    ${
+                        creditMonthlyHint !== null
+                            ? `<div class="goal-card__hint">Платёж: ${escapeHTML(
+                                  formatMoney(creditMonthlyHint)
+                              )}/мес</div>`
+                            : ""
+                    }
                 </div>
 
-                <div class="goal-card__indicators">
-                    <section class="goal-card__indicator-group goal-card__indicator-group--actual">
-                        <h4><span class="indicator-label indicator-label--actual">Факт</span> На сегодня</h4>
-                        <div class="goal-card__meta">
-                            ${isDeposit ? `
-                                <div class="goal-card__meta-item">
-                                    <span>Внесено своих средств</span>
-                                    <strong>${escapeHTML(formatMoney(depositCalculation.principal))}</strong>
-                                </div>
-                                <div class="goal-card__meta-item">
-                                    <span>Остаток актуален на</span>
-                                    <strong>${escapeHTML(formatDate(goal.balanceAsOf))}</strong>
-                                </div>
-                                <div class="goal-card__meta-item">
-                                    <span>Начислено процентов</span>
-                                    <strong>${escapeHTML(formatMoney(depositCalculation.interest))}</strong>
-                                </div>
-                                <div class="goal-card__meta-item">
-                                    <span>Фактическая сумма</span>
-                                    <strong>${escapeHTML(formatMoney(depositCalculation.total))}</strong>
-                                </div>
-                            ` : `
-                                <div class="goal-card__meta-item">
-                                    <span>Фактически погашено</span>
-                                    <strong>${escapeHTML(formatMoney(currentAmount))}</strong>
-                                </div>
-                                <div class="goal-card__meta-item">
-                                    <span>Текущий основной долг</span>
-                                    <strong>${escapeHTML(formatMoney(remainingAmount))}</strong>
-                                </div>
-                                <div class="goal-card__meta-item">
-                                    <span>Погашено от суммы кредита</span>
-                                    <strong>${percentage.toFixed(1)}%</strong>
-                                </div>
-                            `}
-                        </div>
-                    </section>
+                <div class="goal-card__details">
+                    <div class="goal-card__indicators">
+                        <section class="goal-card__indicator-group goal-card__indicator-group--actual">
+                            <h4><span class="indicator-label indicator-label--actual">Факт</span> На сегодня</h4>
+                            <div class="goal-card__meta">
+                                ${isDeposit ? `
+                                    <div class="goal-card__meta-item">
+                                        <span>Внесено своих средств</span>
+                                        <strong>${escapeHTML(formatMoney(depositCalculation.principal))}</strong>
+                                    </div>
+                                    <div class="goal-card__meta-item">
+                                        <span>Остаток актуален на</span>
+                                        <strong>${escapeHTML(formatDate(goal.balanceAsOf))}</strong>
+                                    </div>
+                                    <div class="goal-card__meta-item">
+                                        <span>Начислено процентов</span>
+                                        <strong>${escapeHTML(formatMoney(depositCalculation.interest))}</strong>
+                                    </div>
+                                    <div class="goal-card__meta-item">
+                                        <span>Фактическая сумма</span>
+                                        <strong>${escapeHTML(formatMoney(depositCalculation.total))}</strong>
+                                    </div>
+                                ` : `
+                                    <div class="goal-card__meta-item">
+                                        <span>Фактически погашено</span>
+                                        <strong>${escapeHTML(formatMoney(currentAmount))}</strong>
+                                    </div>
+                                    <div class="goal-card__meta-item">
+                                        <span>Текущий основной долг</span>
+                                        <strong>${escapeHTML(formatMoney(remainingAmount))}</strong>
+                                    </div>
+                                    <div class="goal-card__meta-item">
+                                        <span>Погашено от суммы кредита</span>
+                                        <strong>${percentage.toFixed(1)}%</strong>
+                                    </div>
+                                `}
+                            </div>
+                        </section>
 
-                    <section class="goal-card__indicator-group goal-card__indicator-group--forecast">
-                        <h4><span class="indicator-label indicator-label--forecast">Прогноз</span> До срока</h4>
-                        <div class="goal-card__meta">
-                            ${isDeposit ? `
-                                <div class="goal-card__meta-item">
-                                    <span>Осталось до цели</span>
-                                    <strong>${escapeHTML(formatMoney(remainingAmount))}</strong>
-                                </div>
-                                <div class="goal-card__meta-item">
-                                    <span>Рекомендуемый вклад в месяц</span>
-                                    <strong>${escapeHTML(monthlyRecommendation)}</strong>
-                                </div>
-                                <div class="goal-card__meta-item">
-                                    <span>Будущие проценты</span>
-                                    <strong>${futureDepositInterest === null ? "—" : escapeHTML(formatMoney(futureDepositInterest))}</strong>
-                                </div>
-                                <div class="goal-card__meta-item">
-                                    <span>Расчетная сумма к сроку</span>
-                                    <strong>${deadlineCalculation ? escapeHTML(formatMoney(deadlineCalculation.total)) : "—"}</strong>
-                                </div>
-                                <div class="goal-card__meta-item">
-                                    <span>Условия расчета</span>
-                                    <strong>${escapeHTML(formatPercent(goal.annualRate))}% · ${goal.capitalization === "none" ? "без капитализации" : "ежемесячно"}</strong>
-                                </div>
-                            ` : `
-                                <div class="goal-card__meta-item">
-                                    <span>Аннуитетный платеж</span>
-                                    <strong>${creditSchedule.rows.length ? escapeHTML(formatMoney(creditSchedule.monthlyPayment)) : "—"}</strong>
-                                </div>
-                                <div class="goal-card__meta-item">
-                                    <span>Будущие проценты</span>
-                                    <strong>${creditSchedule.rows.length ? escapeHTML(formatMoney(creditSchedule.totalInterest)) : "—"}</strong>
-                                </div>
-                                <div class="goal-card__meta-item">
-                                    <span>Всего будущих платежей</span>
-                                    <strong>${creditSchedule.rows.length ? escapeHTML(formatMoney(creditSchedule.totalPayment)) : "—"}</strong>
-                                </div>
-                                <div class="goal-card__meta-item">
-                                    <span>Ставка для прогноза</span>
-                                    <strong>${escapeHTML(formatPercent(goal.annualRate))}%</strong>
-                                </div>
-                            `}
-                        </div>
-                    </section>
-                </div>
+                        <section class="goal-card__indicator-group goal-card__indicator-group--forecast">
+                            <h4><span class="indicator-label indicator-label--forecast">Прогноз</span> До срока</h4>
+                            <div class="goal-card__meta">
+                                ${isDeposit ? `
+                                    <div class="goal-card__meta-item">
+                                        <span>Осталось до цели</span>
+                                        <strong>${escapeHTML(formatMoney(remainingAmount))}</strong>
+                                    </div>
+                                    <div class="goal-card__meta-item">
+                                        <span>Рекомендуемый вклад в месяц</span>
+                                        <strong>${escapeHTML(monthlyRecommendation)}</strong>
+                                    </div>
+                                    <div class="goal-card__meta-item">
+                                        <span>Будущие проценты</span>
+                                        <strong>${futureDepositInterest === null ? "—" : escapeHTML(formatMoney(futureDepositInterest))}</strong>
+                                    </div>
+                                    <div class="goal-card__meta-item">
+                                        <span>Расчетная сумма к сроку</span>
+                                        <strong>${deadlineCalculation ? escapeHTML(formatMoney(deadlineCalculation.total)) : "—"}</strong>
+                                    </div>
+                                    <div class="goal-card__meta-item">
+                                        <span>Условия расчета</span>
+                                        <strong>${escapeHTML(formatPercent(goal.annualRate))}% · ${goal.capitalization === "none" ? "без капитализации" : "ежемесячно"}</strong>
+                                    </div>
+                                ` : `
+                                    <div class="goal-card__meta-item">
+                                        <span>Аннуитетный платеж</span>
+                                        <strong>${creditSchedule.rows.length ? escapeHTML(formatMoney(creditSchedule.monthlyPayment)) : "—"}</strong>
+                                    </div>
+                                    <div class="goal-card__meta-item">
+                                        <span>Будущие проценты</span>
+                                        <strong>${creditSchedule.rows.length ? escapeHTML(formatMoney(creditSchedule.totalInterest)) : "—"}</strong>
+                                    </div>
+                                    <div class="goal-card__meta-item">
+                                        <span>Всего будущих платежей</span>
+                                        <strong>${creditSchedule.rows.length ? escapeHTML(formatMoney(creditSchedule.totalPayment)) : "—"}</strong>
+                                    </div>
+                                    <div class="goal-card__meta-item">
+                                        <span>Ставка для прогноза</span>
+                                        <strong>${escapeHTML(formatPercent(goal.annualRate))}%</strong>
+                                    </div>
+                                `}
+                            </div>
+                        </section>
+                    </div>
 
+                    ${!isDeposit ? `
+                    <details class="credit-schedule">
+                        <summary>Прогнозный график платежей (${creditSchedule.rows.length})</summary>
+                        ${creditSchedule.rows.length ? `
+                        <div class="credit-schedule__table-wrap">
+                            <table class="credit-schedule__table">
+                                <thead><tr><th>№</th><th>Дата</th><th>Платеж</th><th>Проценты</th><th>Основной долг</th><th>Остаток</th></tr></thead>
+                                <tbody>${creditSchedule.rows.map((row) => `
+                                    <tr>
+                                        <td>${row.number}</td>
+                                        <td>${escapeHTML(formatDate(row.date))}</td>
+                                        <td>${escapeHTML(formatMoney(row.payment))}</td>
+                                        <td>${escapeHTML(formatMoney(row.interest))}</td>
+                                        <td>${escapeHTML(formatMoney(row.principal))}</td>
+                                        <td>${escapeHTML(formatMoney(row.balance))}</td>
+                                    </tr>`).join("")}
+                                </tbody>
+                            </table>
+                        </div>` : `<p class="credit-schedule__empty">Укажите будущую дату закрытия и остаток долга.</p>`}
+                    </details>` : ""}
 
-                ${!isDeposit ? `
-                <details class="credit-schedule">
-                    <summary>Прогнозный график платежей (${creditSchedule.rows.length})</summary>
-                    ${creditSchedule.rows.length ? `
-                    <div class="credit-schedule__table-wrap">
-                        <table class="credit-schedule__table">
-                            <thead><tr><th>№</th><th>Дата</th><th>Платеж</th><th>Проценты</th><th>Основной долг</th><th>Остаток</th></tr></thead>
-                            <tbody>${creditSchedule.rows.map((row) => `
-                                <tr>
-                                    <td>${row.number}</td>
-                                    <td>${escapeHTML(formatDate(row.date))}</td>
-                                    <td>${escapeHTML(formatMoney(row.payment))}</td>
-                                    <td>${escapeHTML(formatMoney(row.interest))}</td>
-                                    <td>${escapeHTML(formatMoney(row.principal))}</td>
-                                    <td>${escapeHTML(formatMoney(row.balance))}</td>
-                                </tr>`).join("")}
-                            </tbody>
-                        </table>
-                    </div>` : `<p class="credit-schedule__empty">Укажите будущую дату закрытия и остаток долга.</p>`}
-                </details>` : ""}
-                <div class="goal-card__comment">
-                    ${escapeHTML(goal.comment || "Комментарий не добавлен.")}
+                    <div class="goal-card__comment">
+                        ${escapeHTML(goal.comment || "Комментарий не добавлен.")}
+                    </div>
                 </div>
 
                 <div class="goal-card__actions">
@@ -499,11 +543,44 @@ const goalAmountSnapshot = new Map();
                         data-action="quick-contribution"
                         data-id="${escapeHTML(goal.id)}"
                     >
-                        ${isDeposit ? "+ Добавить вклад" : "+ Добавить платёж"}
+                        ${isDeposit ? "+ Вклад" : "+ Платёж"}
                     </button>
 
+                    <div class="mobile-action-menu mobile-only">
+                        <button
+                            class="mobile-action-menu__toggle"
+                            type="button"
+                            data-action="toggle-mobile-menu"
+                            aria-label="Действия с целью"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                        >
+                            ⋯
+                        </button>
+                        <div class="mobile-action-menu__panel hidden" role="menu">
+                            <button
+                                class="mobile-action-menu__item"
+                                type="button"
+                                role="menuitem"
+                                data-action="edit-goal"
+                                data-id="${escapeHTML(goal.id)}"
+                            >
+                                Редактировать
+                            </button>
+                            <button
+                                class="mobile-action-menu__item mobile-action-menu__item--danger"
+                                type="button"
+                                role="menuitem"
+                                data-action="delete-goal"
+                                data-id="${escapeHTML(goal.id)}"
+                            >
+                                Удалить
+                            </button>
+                        </div>
+                    </div>
+
                     <button
-                        class="button button--secondary button--small"
+                        class="button button--secondary button--small desktop-only-action"
                         type="button"
                         data-action="edit-goal"
                         data-id="${escapeHTML(goal.id)}"
@@ -512,12 +589,20 @@ const goalAmountSnapshot = new Map();
                     </button>
 
                     <button
-                        class="button button--danger button--small"
+                        class="button button--danger button--small desktop-only-action"
                         type="button"
                         data-action="delete-goal"
                         data-id="${escapeHTML(goal.id)}"
                     >
                         Удалить
+                    </button>
+
+                    <button
+                        class="button button--secondary button--small mobile-only"
+                        type="button"
+                        data-action="toggle-goal-details"
+                    >
+                        Подробнее
                     </button>
                 </div>
             `;

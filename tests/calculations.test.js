@@ -539,3 +539,127 @@ test("groupTransactionsByDate keeps sorted order within day groups", () => {
     assert.equal(groups[1].transactions[0].amount, 100);
     assert.equal(JSON.stringify(source), snapshot);
 });
+
+test("contributions sort by date then createdAt without mutating state", () => {
+    const context = createHarness();
+    vm.runInContext(`
+        this.sortApi = {
+            sortContributionsNewestFirst,
+            compareRecordsNewestFirst
+        };
+    `, context);
+
+    const source = [
+        {
+            id: "legacy",
+            date: "2026-08-08",
+            amount: 50,
+            goalId: "g1"
+        },
+        {
+            id: "a",
+            date: "2026-08-08",
+            amount: 100,
+            goalId: "g1",
+            createdAt: "2026-08-08T10:00:00.000Z"
+        },
+        {
+            id: "b",
+            date: "2026-08-08",
+            amount: 200,
+            goalId: "g1",
+            createdAt: "2026-08-08T10:01:00.000Z"
+        },
+        {
+            id: "c",
+            date: "2026-08-08",
+            amount: 300,
+            goalId: "g1",
+            createdAt: "2026-08-08T10:02:00.000Z"
+        },
+        {
+            id: "older-day",
+            date: "2026-08-07",
+            amount: 999,
+            goalId: "g1",
+            createdAt: "2026-08-08T12:00:00.000Z"
+        }
+    ];
+    const snapshot = JSON.stringify(source);
+
+    const sorted = context.sortApi.sortContributionsNewestFirst(source);
+
+    assert.deepEqual(
+        sorted.map((item) => item.amount),
+        [300, 200, 100, 50, 999]
+    );
+    assert.equal(JSON.stringify(source), snapshot);
+    assert.notEqual(sorted, source);
+    assert.equal(sorted[3].id, "legacy");
+});
+
+test("transfers sort by date then createdAt without mutating state", () => {
+    const context = createHarness();
+    vm.runInContext(`
+        this.sortApi = {
+            sortTransfersNewestFirst,
+            sortRecordsNewestFirst
+        };
+    `, context);
+
+    const source = [
+        {
+            id: "legacy",
+            date: "2026-08-08",
+            amount: 50,
+            fromAccountId: "a1",
+            toAccountId: "a2"
+        },
+        {
+            id: "a",
+            date: "2026-08-08",
+            amount: 100,
+            fromAccountId: "a1",
+            toAccountId: "a2",
+            createdAt: "2026-08-08T10:00:00.000Z"
+        },
+        {
+            id: "b",
+            date: "2026-08-08",
+            amount: 200,
+            fromAccountId: "a1",
+            toAccountId: "a2",
+            createdAt: "2026-08-08T10:01:00.000Z"
+        },
+        {
+            id: "c",
+            date: "2026-08-08",
+            amount: 300,
+            fromAccountId: "a1",
+            toAccountId: "a2",
+            createdAt: "2026-08-08T10:02:00.000Z"
+        },
+        {
+            id: "older-day",
+            date: "2026-08-07",
+            amount: 999,
+            fromAccountId: "a1",
+            toAccountId: "a2",
+            createdAt: "2026-08-08T12:00:00.000Z"
+        }
+    ];
+    const snapshot = JSON.stringify(source);
+
+    const sorted = context.sortApi.sortTransfersNewestFirst(source);
+
+    assert.deepEqual(
+        sorted.map((item) => item.amount),
+        [300, 200, 100, 50, 999]
+    );
+    assert.equal(JSON.stringify(source), snapshot);
+    assert.notEqual(sorted, source);
+    assert.deepEqual(
+        context.sortApi.sortRecordsNewestFirst(source).map((item) => item.id),
+        sorted.map((item) => item.id)
+    );
+});

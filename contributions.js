@@ -100,6 +100,7 @@
             elements.cancelContributionEdit.classList.remove("hidden");
             showFormMessage(elements.contributionMessage, "");
 
+            elements.contributionForm.classList.add("is-mobile-open");
             elements.contributionForm.scrollIntoView({
                 behavior: "smooth",
                 block: "center"
@@ -144,6 +145,7 @@
             elements.contributionDate.value = getToday();
             elements.contributionFormTitle.textContent = "Добавить вклад";
             elements.cancelContributionEdit.classList.add("hidden");
+            elements.contributionForm.classList.remove("is-mobile-open");
             showFormMessage(elements.contributionMessage, "");
         }
 
@@ -203,8 +205,9 @@
             const selectedGoal = elements.contributionGoalFilter.value;
             const selectedMonth = elements.contributionMonthFilter.value;
 
-            return [...state.contributions]
-                .filter((contribution) => {
+            return state.contributions
+                .map((contribution, index) => ({ record: contribution, index }))
+                .filter(({ record: contribution }) => {
                     const goal = getGoalById(contribution.goalId);
 
                     const searchableText = [
@@ -228,13 +231,149 @@
 
                     return matchesSearch && matchesGoal && matchesMonth;
                 })
-                .sort((first, second) =>
-                    second.date.localeCompare(first.date)
-                );
+                .sort(compareRecordsNewestFirst)
+                .map(({ record }) => record);
         }
 
-        function renderContributions() {
-            const contributions = getFilteredContributions();
+        function getContributionsEmptyCopy(hasResults) {
+            if (hasResults) {
+                return null;
+            }
+
+            if (state.contributions.length === 0) {
+                return {
+                    title: "Вкладов пока нет.",
+                    text: "Сначала создайте финансовую цель, затем добавьте вклад."
+                };
+            }
+
+            return {
+                title: "По заданным фильтрам вкладов нет.",
+                text: "Измените поиск или сбросьте фильтры."
+            };
+        }
+
+        function buildMobileContributionCard(contribution) {
+            const goal = getGoalById(contribution.goalId);
+            const accountName =
+                getAccountById(contribution.accountId)?.name || "";
+            const source = String(contribution.source || "").trim();
+            const comment = String(contribution.comment || "").trim();
+            const metaParts = [accountName, source].filter(Boolean);
+
+            const card = document.createElement("article");
+            card.className = "mobile-tx-card";
+            card.dataset.recordId = contribution.id;
+
+            card.innerHTML = `
+                <div class="mobile-tx-card__row">
+                    <div class="mobile-tx-card__body">
+                        <div class="mobile-tx-card__category">
+                            ${escapeHTML(goal?.name || "Удалённая цель")}
+                        </div>
+                        ${
+                            comment
+                                ? `<div class="mobile-tx-card__comment">${escapeHTML(comment)}</div>`
+                                : ""
+                        }
+                        ${
+                            metaParts.length
+                                ? `<div class="mobile-tx-card__meta">${escapeHTML(metaParts.join(" · "))}</div>`
+                                : ""
+                        }
+                    </div>
+                    <div class="mobile-tx-card__aside">
+                        <div class="mobile-tx-card__amount positive">
+                            +${escapeHTML(formatMoney(contribution.amount))}
+                        </div>
+                        <div class="mobile-action-menu mobile-tx-card__menu">
+                            <button
+                                class="mobile-action-menu__toggle mobile-tx-card__menu-toggle"
+                                type="button"
+                                data-action="toggle-mobile-menu"
+                                aria-label="Действия со вкладом"
+                                aria-haspopup="true"
+                                aria-expanded="false"
+                            >
+                                ⋯
+                            </button>
+                            <div class="mobile-action-menu__panel mobile-tx-card__menu-panel hidden" role="menu">
+                                <button
+                                    class="mobile-action-menu__item mobile-tx-card__menu-item"
+                                    type="button"
+                                    role="menuitem"
+                                    data-action="edit-contribution"
+                                    data-id="${escapeHTML(contribution.id)}"
+                                >
+                                    Редактировать
+                                </button>
+                                <button
+                                    class="mobile-action-menu__item mobile-action-menu__item--danger mobile-tx-card__menu-item mobile-tx-card__menu-item--danger"
+                                    type="button"
+                                    role="menuitem"
+                                    data-action="delete-contribution"
+                                    data-id="${escapeHTML(contribution.id)}"
+                                >
+                                    Удалить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        function renderMobileContributionsFeed(contributions) {
+            if (!elements.mobileContributionsList || !elements.mobileContributionsEmpty) {
+                return;
+            }
+
+            elements.mobileContributionsList.innerHTML = "";
+
+            const emptyCopy = getContributionsEmptyCopy(contributions.length > 0);
+            elements.mobileContributionsEmpty.classList.toggle(
+                "hidden",
+                !emptyCopy
+            );
+
+            if (emptyCopy) {
+                if (elements.mobileContributionsEmptyTitle) {
+                    elements.mobileContributionsEmptyTitle.textContent =
+                        emptyCopy.title;
+                }
+
+                if (elements.mobileContributionsEmptyText) {
+                    elements.mobileContributionsEmptyText.textContent =
+                        emptyCopy.text;
+                }
+
+                return;
+            }
+
+            groupRecordsByDate(contributions).forEach((group) => {
+                const section = document.createElement("section");
+                section.className = "mobile-tx-group";
+                section.setAttribute(
+                    "aria-label",
+                    formatTransactionDayLabel(group.date)
+                );
+
+                const heading = document.createElement("h3");
+                heading.className = "mobile-tx-group__title";
+                heading.textContent = formatTransactionDayLabel(group.date);
+                section.appendChild(heading);
+
+                group.records.forEach((contribution) => {
+                    section.appendChild(buildMobileContributionCard(contribution));
+                });
+
+                elements.mobileContributionsList.appendChild(section);
+            });
+        }
+
+        function renderDesktopContributionsTable(contributions) {
             const existingContributionIds = new Set(
                 [...elements.contributionsTableBody.querySelectorAll("tr[data-record-id]")]
                     .map((row) => row.dataset.recordId)
@@ -242,10 +381,24 @@
 
             elements.contributionsTableBody.innerHTML = "";
 
+            const emptyCopy = getContributionsEmptyCopy(contributions.length > 0);
             elements.contributionsEmptyState.classList.toggle(
                 "hidden",
-                contributions.length > 0
+                !emptyCopy
             );
+
+            if (emptyCopy) {
+                const title = document.getElementById("contributionsEmptyTitle");
+                const text = document.getElementById("contributionsEmptyText");
+
+                if (title) {
+                    title.textContent = emptyCopy.title.replace(/\.$/, "");
+                }
+
+                if (text) {
+                    text.textContent = emptyCopy.text;
+                }
+            }
 
             contributions.forEach((contribution) => {
                 const goal = getGoalById(contribution.goalId);
@@ -306,6 +459,56 @@
 
                 elements.contributionsTableBody.appendChild(row);
             });
+        }
+
+        function renderContributions() {
+            const contributions = getFilteredContributions();
+            renderDesktopContributionsTable(contributions);
+            renderMobileContributionsFeed(contributions);
+        }
+
+        function handleMobileContributionsClick(event) {
+            const button = event.target.closest("[data-action]");
+
+            if (
+                !button ||
+                !elements.mobileContributionsList ||
+                !elements.mobileContributionsList.contains(button)
+            ) {
+                return;
+            }
+
+            const { action, id } = button.dataset;
+
+            if (action === "toggle-mobile-menu") {
+                const panel = button
+                    .closest(".mobile-action-menu, .mobile-tx-card__menu")
+                    ?.querySelector(".mobile-action-menu__panel, .mobile-tx-card__menu-panel");
+
+                if (!panel) {
+                    return;
+                }
+
+                const willOpen = panel.classList.contains("hidden");
+                closeMobileActionMenus(null, willOpen ? panel : null);
+                panel.classList.toggle("hidden", !willOpen);
+                button.setAttribute(
+                    "aria-expanded",
+                    willOpen ? "true" : "false"
+                );
+                return;
+            }
+
+            if (action === "edit-contribution") {
+                closeMobileActionMenus();
+                editContribution(id);
+                return;
+            }
+
+            if (action === "delete-contribution") {
+                closeMobileActionMenus();
+                deleteContribution(id);
+            }
         }
 
         /* =========================================================

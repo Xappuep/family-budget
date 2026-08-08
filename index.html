@@ -29,7 +29,7 @@
         обновлять ОДНО и то же значение версии у всех локальных assets ниже.
         Не использовать случайное значение на каждый запрос.
     -->
-    <link rel="stylesheet" href="styles.css?v=20260808-4">
+    <link rel="stylesheet" href="styles.css?v=20260808-5">
 </head>
 
 <body data-mobile-tab="home">
@@ -224,11 +224,15 @@
 
                 <div class="mobile-dashboard__voice-wrap">
                     <button
-                        class="button button--secondary mobile-dashboard__voice hidden"
+                        class="mobile-dashboard__voice-cta hidden"
                         id="homeVoiceButton"
                         type="button"
                     >
-                        🎙 Добавить голосом
+                        <span class="mobile-dashboard__voice-cta__icon" aria-hidden="true">🎙</span>
+                        <span class="mobile-dashboard__voice-cta__copy">
+                            <span class="mobile-dashboard__voice-cta__title">Добавить голосом</span>
+                            <span class="mobile-dashboard__voice-cta__subtitle">Скажите расход или доход</span>
+                        </span>
                     </button>
                 </div>
 
@@ -1159,14 +1163,22 @@
                         autocomplete="off"
                         enterkeyhint="done"
                     >
-                    <div
-                        class="quick-add-categories"
-                        id="quickAddCategories"
-                        role="listbox"
-                        aria-label="Частые категории"
-                    ></div>
+                    <details
+                        class="quick-add-categories-disclosure"
+                        id="quickAddCategoriesDisclosure"
+                    >
+                        <summary class="quick-add-categories-disclosure__summary">
+                            Выбрать категорию
+                        </summary>
+                        <div
+                            class="quick-add-categories"
+                            id="quickAddCategories"
+                            role="listbox"
+                            aria-label="Частые категории"
+                        ></div>
+                    </details>
                     <p class="quick-add-categories__hint">
-                        Выберите категорию или введите свою.
+                        Введите свою категорию или выберите из списка.
                     </p>
                 </div>
 
@@ -1244,25 +1256,25 @@
         <span class="theme-toggle__label" id="themeToggleLabel">Светлая</span>
     </button>
     <!--
-        Локальные скрипты: та же asset version, что у styles.css (?v=20260808-4).
+        Локальные скрипты: та же asset version, что у styles.css (?v=20260808-5).
         Перед публикацией обновлять версию у всех CSS/JS синхронно.
     -->
-    <script src="constants.js?v=20260808-4"></script>
-    <script src="state.js?v=20260808-4"></script>
-    <script src="money.js?v=20260808-4"></script>
-    <script src="dates.js?v=20260808-4"></script>
-    <script src="formatting.js?v=20260808-4"></script>
-    <script src="ui.js?v=20260808-4"></script>
-    <script src="calculations.js?v=20260808-4"></script>
-    <script src="storage.js?v=20260808-4"></script>
-    <script src="accounts.js?v=20260808-4"></script>
-    <script src="transactions.js?v=20260808-4"></script>
-    <script src="voice-parser.js?v=20260808-4"></script>
-    <script src="voice.js?v=20260808-4"></script>
-    <script src="goals.js?v=20260808-4"></script>
-    <script src="contributions.js?v=20260808-4"></script>
-    <script src="analytics.js?v=20260808-4"></script>
-    <script src="backup.js?v=20260808-4"></script>
-    <script src="app.js?v=20260808-4"></script>
+    <script src="constants.js?v=20260808-5"></script>
+    <script src="state.js?v=20260808-5"></script>
+    <script src="money.js?v=20260808-5"></script>
+    <script src="dates.js?v=20260808-5"></script>
+    <script src="formatting.js?v=20260808-5"></script>
+    <script src="ui.js?v=20260808-5"></script>
+    <script src="calculations.js?v=20260808-5"></script>
+    <script src="storage.js?v=20260808-5"></script>
+    <script src="accounts.js?v=20260808-5"></script>
+    <script src="transactions.js?v=20260808-5"></script>
+    <script src="voice-parser.js?v=20260808-5"></script>
+    <script src="voice.js?v=20260808-5"></script>
+    <script src="goals.js?v=20260808-5"></script>
+    <script src="contributions.js?v=20260808-5"></script>
+    <script src="analytics.js?v=20260808-5"></script>
+    <script src="backup.js?v=20260808-5"></script>
+    <script src="app.js?v=20260808-5"></script>
 </body>
 </html>

@@ -353,6 +353,10 @@
             elements.quickAddCategory.value = category;
             syncQuickAddCategorySelection();
             showFormMessage(elements.quickAddMessage, "");
+
+            if (elements.quickAddCategoriesDisclosure) {
+                elements.quickAddCategoriesDisclosure.open = false;
+            }
         }
 
         function handleQuickAddCategoriesClick(event) {
@@ -411,6 +415,10 @@
                 elements.quickAddExtra.open = false;
             }
 
+            if (elements.quickAddCategoriesDisclosure) {
+                elements.quickAddCategoriesDisclosure.open = false;
+            }
+
             showFormMessage(elements.quickAddMessage, "");
             quickAddSubmitLocked = false;
 
@@ -437,7 +445,7 @@
          * @param {{ focusAmount?: boolean }} [options]
          */
         function openQuickAddSheet(options = {}) {
-            const { focusAmount = true } = options;
+            const { focusAmount = false } = options;
 
             if (!elements.quickAddModal) {
                 return;
@@ -447,6 +455,14 @@
             resetQuickAddForm();
             elements.quickAddModal.classList.remove("hidden");
             document.body.style.overflow = "hidden";
+
+            const sheetDialog = elements.quickAddModal.querySelector(
+                ".quick-add-sheet__dialog"
+            );
+
+            if (sheetDialog) {
+                sheetDialog.scrollTop = 0;
+            }
 
             // Fail-safe: контейнер уже в DOM; гарантируем кнопки после открытия sheet.
             renderQuickAddCategories();

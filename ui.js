@@ -212,6 +212,9 @@
             quickAddAmount: document.getElementById("quickAddAmount"),
             quickAddCategory: document.getElementById("quickAddCategory"),
             quickAddCategories: document.getElementById("quickAddCategories"),
+            quickAddCategoriesDisclosure: document.getElementById(
+                "quickAddCategoriesDisclosure"
+            ),
             quickAddAccount: document.getElementById("quickAddAccount"),
             quickAddExtra: document.getElementById("quickAddExtra"),
             quickAddDate: document.getElementById("quickAddDate"),
@@ -351,7 +354,7 @@
          * Центральная кнопка «+»: открывает Quick Add bottom sheet.
          */
         function openMobileQuickAdd() {
-            openQuickAddSheet();
+            openQuickAddSheet({ focusAmount: false });
         }
 
         /**
@@ -394,8 +397,37 @@
         }
 
         /**
-         * Открывает меню вверх, если снизу мало места (навигация / край viewport).
+         * Открывает меню вверх при нехватке места снизу и
+         * горизонтально удерживает panel внутри viewport.
          */
+        function resetMobileActionMenuShift(panel) {
+            if (!panel) {
+                return;
+            }
+
+            panel.style.setProperty("--mobile-menu-shift-x", "0px");
+        }
+
+        function clampMobileActionMenuHorizontally(panel) {
+            if (!panel) {
+                return;
+            }
+
+            resetMobileActionMenuShift(panel);
+
+            const padding = 12;
+            const rect = panel.getBoundingClientRect();
+            let shiftX = 0;
+
+            if (rect.left < padding) {
+                shiftX = padding - rect.left;
+            } else if (rect.right > window.innerWidth - padding) {
+                shiftX = window.innerWidth - padding - rect.right;
+            }
+
+            panel.style.setProperty("--mobile-menu-shift-x", `${shiftX}px`);
+        }
+
         function positionMobileActionMenu(panel, toggle) {
             const menu = getMobileActionMenuRoot(panel);
 
@@ -404,6 +436,7 @@
             }
 
             menu.classList.remove("mobile-action-menu--open-up");
+            resetMobileActionMenuShift(panel);
 
             const toggleRect = toggle.getBoundingClientRect();
             const panelHeight = Math.max(panel.getBoundingClientRect().height, 96);
@@ -421,6 +454,11 @@
             if (spaceBelow < panelHeight && spaceAbove > spaceBelow) {
                 menu.classList.add("mobile-action-menu--open-up");
             }
+
+            // После вертикального выбора измеряем снова и клампим по X.
+            window.requestAnimationFrame(() => {
+                clampMobileActionMenuHorizontally(panel);
+            });
         }
 
         /**
@@ -478,6 +516,7 @@
                     }
 
                     panel.classList.add("hidden");
+                    resetMobileActionMenuShift(panel);
                     const toggle = panel
                         .closest(".mobile-action-menu, .mobile-tx-card__menu")
                         ?.querySelector(

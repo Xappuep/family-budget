@@ -76,11 +76,14 @@ function setVoiceUnsupportedState() {
 }
 
 function updateVoiceMicButtons(isListening) {
-    const label = isListening ? "Остановить" : "🎙 Голосом";
-    const homeLabel = isListening ? "Остановить" : "🎙 Добавить голосом";
+    const quickLabel = isListening ? "Остановить" : "🎙 Голосом";
+    const homeTitle = isListening ? "Остановить" : "Добавить голосом";
+    const homeSubtitle = isListening
+        ? "Слушаю команду"
+        : "Скажите расход или доход";
 
     if (elements.quickAddVoiceButton) {
-        elements.quickAddVoiceButton.textContent = label;
+        elements.quickAddVoiceButton.textContent = quickLabel;
         elements.quickAddVoiceButton.classList.toggle(
             "quick-add-voice__button--listening",
             isListening
@@ -92,10 +95,32 @@ function updateVoiceMicButtons(isListening) {
     }
 
     if (elements.homeVoiceButton) {
-        elements.homeVoiceButton.textContent = homeLabel;
+        const title = elements.homeVoiceButton.querySelector(
+            ".mobile-dashboard__voice-cta__title"
+        );
+        const subtitle = elements.homeVoiceButton.querySelector(
+            ".mobile-dashboard__voice-cta__subtitle"
+        );
+
+        if (title) {
+            title.textContent = homeTitle;
+        } else {
+            elements.homeVoiceButton.textContent = isListening
+                ? "Остановить"
+                : "🎙 Добавить голосом";
+        }
+
+        if (subtitle) {
+            subtitle.textContent = homeSubtitle;
+        }
+
         elements.homeVoiceButton.classList.toggle(
-            "mobile-dashboard__voice--listening",
+            "mobile-dashboard__voice-cta--listening",
             isListening
+        );
+        elements.homeVoiceButton.setAttribute(
+            "aria-pressed",
+            isListening ? "true" : "false"
         );
     }
 }

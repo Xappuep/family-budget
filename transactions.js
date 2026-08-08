@@ -221,18 +221,17 @@
         }
 
         /**
-         * Счёт для Quick Add: последняя операция → default → первый доступный.
+         * Счёт для Quick Add: последний по createdAt (не по финансовой дате)
+         * → default → первый доступный.
          */
         function getPreferredTransactionAccountId() {
-            const newestTransaction = sortTransactionsNewestFirst(
-                state.transactions
-            )[0];
+            const lastUsedAccountId = getLastUsedTransactionAccountId(
+                state.transactions,
+                (accountId) => Boolean(getAccountById(accountId))
+            );
 
-            if (
-                newestTransaction &&
-                getAccountById(newestTransaction.accountId)
-            ) {
-                return newestTransaction.accountId;
+            if (lastUsedAccountId) {
+                return lastUsedAccountId;
             }
 
             if (getAccountById(DEFAULT_ACCOUNT_ID)) {

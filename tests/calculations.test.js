@@ -455,3 +455,63 @@ test("transactions sort by date then createdAt without mutating state", () => {
     assert.equal(sorted[sorted.length - 1].amount, 999);
     assert.equal(sorted[3].id, "legacy");
 });
+
+test("last used account follows createdAt, not financial date", () => {
+    const context = createHarness();
+    vm.runInContext(`
+        this.accountApi = { getLastUsedTransactionAccountId };
+    `, context);
+
+    const knownAccounts = new Set(["card-a", "card-b", "card-c"]);
+    const accountExists = (accountId) => knownAccounts.has(accountId);
+
+    // Более поздняя финансовая дата у card-a, но card-b создана позже.
+    const byCreatedAt = context.accountApi.getLastUsedTransactionAccountId(
+        [
+            {
+                id: "1",
+                date: "2026-08-09",
+                accountId: "card-a",
+                createdAt: "2026-08-08T10:00:00.000Z"
+            },
+            {
+                id: "2",
+                date: "2026-08-07",
+                accountId: "card-b",
+                createdAt: "2026-08-08T12:00:00.000Z"
+            }
+        ],
+        accountExists
+    );
+    assert.equal(byCreatedAt, "card-b");
+
+    // Legacy без createdAt: последний валидный в массиве.
+    const byArrayOrder = context.accountApi.getLastUsedTransactionAccountId(
+        [
+            { id: "legacy-1", date: "2026-08-08", accountId: "card-a" },
+            { id: "legacy-2", date: "2026-08-08", accountId: "card-c" }
+        ],
+        accountExists
+    );
+    assert.equal(byArrayOrder, "card-c");
+
+    // Удалённый счёт пропускается.
+    const skipsMissing = context.accountApi.getLastUsedTransactionAccountId(
+        [
+            {
+                id: "gone",
+                date: "2026-08-08",
+                accountId: "deleted",
+                createdAt: "2026-08-08T13:00:00.000Z"
+            },
+            {
+                id: "ok",
+                date: "2026-08-08",
+                accountId: "card-a",
+                createdAt: "2026-08-08T11:00:00.000Z"
+            }
+        ],
+        accountExists
+    );
+    assert.equal(skipsMissing, "card-a");
+});

@@ -271,6 +271,68 @@
                 .map(({ transaction }) => transaction);
         }
 
+        /**
+         * Последний использованный счёт по времени создания операции (createdAt),
+         * а не по финансовой дате. Не использует sortTransactionsNewestFirst.
+         *
+         * @param {Array} transactions
+         * @param {(accountId: string) => boolean} accountExists
+         * @returns {string} accountId или ""
+         */
+        function getLastUsedTransactionAccountId(transactions, accountExists) {
+            const exists =
+                typeof accountExists === "function"
+                    ? accountExists
+                    : () => true;
+
+            const candidates = [];
+
+            (transactions || []).forEach((transaction, index) => {
+                const accountId = transaction?.accountId;
+
+                if (!accountId || !exists(accountId)) {
+                    return;
+                }
+
+                candidates.push({ transaction, index });
+            });
+
+            if (!candidates.length) {
+                return "";
+            }
+
+            const withCreatedAt = candidates.filter((item) =>
+                getTransactionCreatedAtValue(item.transaction)
+            );
+
+            if (withCreatedAt.length) {
+                let newest = withCreatedAt[0];
+
+                for (let index = 1; index < withCreatedAt.length; index += 1) {
+                    const candidate = withCreatedAt[index];
+                    const byCreated = getTransactionCreatedAtValue(
+                        candidate.transaction
+                    ).localeCompare(
+                        getTransactionCreatedAtValue(newest.transaction)
+                    );
+
+                    if (
+                        byCreated > 0 ||
+                        (byCreated === 0 && candidate.index > newest.index)
+                    ) {
+                        newest = candidate;
+                    }
+                }
+
+                return newest.transaction.accountId;
+            }
+
+            // Legacy без createdAt: последний по порядку массива.
+            return candidates.reduce((newest, candidate) =>
+                candidate.index > newest.index ? candidate : newest
+            ).transaction.accountId;
+        }
+
         function calculateSummary(dateRange = null) {
             const incomeTransactions = state.transactions.filter(
                 (transaction) => transaction.type === "income" && isTransactionInDateRange(transaction, dateRange)

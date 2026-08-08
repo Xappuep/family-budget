@@ -256,6 +256,95 @@
                 : "Добавить расход";
         }
 
+        /**
+         * Явные кнопки категорий вместо datalist (на Android datalist
+         * уходит в подсказки клавиатуры и не даёт нормальный список).
+         */
+        function renderQuickAddCategories() {
+            if (!elements.quickAddCategories) {
+                return;
+            }
+
+            const type =
+                elements.quickAddType?.value === "income" ? "income" : "expense";
+            const categories = QUICK_ADD_CATEGORIES[type] || QUICK_ADD_CATEGORIES.expense;
+            const selected = String(elements.quickAddCategory?.value || "").trim();
+
+            elements.quickAddCategories.innerHTML = "";
+
+            categories.forEach((category) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "quick-add-category";
+                button.setAttribute("role", "option");
+                button.dataset.category = category;
+                button.textContent = category;
+
+                const isSelected =
+                    selected.localeCompare(category, "ru", {
+                        sensitivity: "accent"
+                    }) === 0;
+
+                button.classList.toggle("quick-add-category--selected", isSelected);
+                button.setAttribute(
+                    "aria-selected",
+                    isSelected ? "true" : "false"
+                );
+
+                elements.quickAddCategories.appendChild(button);
+            });
+        }
+
+        function syncQuickAddCategorySelection() {
+            if (!elements.quickAddCategories) {
+                return;
+            }
+
+            const selected = String(elements.quickAddCategory?.value || "").trim();
+
+            elements.quickAddCategories
+                .querySelectorAll(".quick-add-category")
+                .forEach((button) => {
+                    const isSelected =
+                        selected.localeCompare(button.dataset.category || "", "ru", {
+                            sensitivity: "accent"
+                        }) === 0;
+
+                    button.classList.toggle(
+                        "quick-add-category--selected",
+                        isSelected
+                    );
+                    button.setAttribute(
+                        "aria-selected",
+                        isSelected ? "true" : "false"
+                    );
+                });
+        }
+
+        function selectQuickAddCategory(category) {
+            if (!elements.quickAddCategory) {
+                return;
+            }
+
+            elements.quickAddCategory.value = category;
+            syncQuickAddCategorySelection();
+            showFormMessage(elements.quickAddMessage, "");
+        }
+
+        function handleQuickAddCategoriesClick(event) {
+            const button = event.target.closest(".quick-add-category");
+
+            if (
+                !button ||
+                !elements.quickAddCategories ||
+                !elements.quickAddCategories.contains(button)
+            ) {
+                return;
+            }
+
+            selectQuickAddCategory(button.dataset.category || "");
+        }
+
         function setQuickAddType(type) {
             const nextType = type === "income" ? "income" : "expense";
             elements.quickAddType.value = nextType;
@@ -277,6 +366,7 @@
             }
 
             updateQuickAddSubmitLabel();
+            renderQuickAddCategories();
         }
 
         function resetQuickAddForm() {
@@ -303,6 +393,8 @@
             if (elements.quickAddSubmit) {
                 elements.quickAddSubmit.disabled = false;
             }
+
+            renderQuickAddCategories();
         }
 
         function isQuickAddOpen() {

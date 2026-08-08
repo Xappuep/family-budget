@@ -211,6 +211,7 @@
             quickAddTypeToggle: document.getElementById("quickAddTypeToggle"),
             quickAddAmount: document.getElementById("quickAddAmount"),
             quickAddCategory: document.getElementById("quickAddCategory"),
+            quickAddCategories: document.getElementById("quickAddCategories"),
             quickAddAccount: document.getElementById("quickAddAccount"),
             quickAddExtra: document.getElementById("quickAddExtra"),
             quickAddDate: document.getElementById("quickAddDate"),

@@ -1114,12 +1114,21 @@
                     <input
                         id="quickAddCategory"
                         type="text"
-                        list="categorySuggestions"
                         maxlength="60"
                         placeholder="Продукты, транспорт..."
                         required
                         autocomplete="off"
+                        enterkeyhint="done"
                     >
+                    <div
+                        class="quick-add-categories"
+                        id="quickAddCategories"
+                        role="listbox"
+                        aria-label="Частые категории"
+                    ></div>
+                    <p class="quick-add-categories__hint">
+                        Выберите категорию или введите свою.
+                    </p>
                 </div>
 
                 <div class="field">

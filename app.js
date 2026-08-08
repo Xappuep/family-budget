@@ -158,6 +158,19 @@
             );
         }
 
+        if (elements.quickAddCategories) {
+            elements.quickAddCategories.addEventListener(
+                "click",
+                handleQuickAddCategoriesClick
+            );
+        }
+
+        if (elements.quickAddCategory) {
+            elements.quickAddCategory.addEventListener("input", () => {
+                syncQuickAddCategorySelection();
+            });
+        }
+
         if (elements.closeQuickAddModal) {
             elements.closeQuickAddModal.addEventListener("click", () => {
                 closeQuickAddSheet();

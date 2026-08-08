@@ -5,6 +5,7 @@
             resetGoalForm();
             resetContributionForm();
             closeQuickContributionModal();
+            closeQuickAddSheet({ restoreFocus: false });
         }
 
         /* =========================================================
@@ -89,9 +90,49 @@
             }
         });
 
+        if (elements.quickAddForm) {
+            elements.quickAddForm.addEventListener("submit", handleQuickAddSubmit);
+        }
+
+        if (elements.quickAddTypeToggle) {
+            elements.quickAddTypeToggle.addEventListener(
+                "click",
+                handleQuickAddTypeClick
+            );
+        }
+
+        if (elements.closeQuickAddModal) {
+            elements.closeQuickAddModal.addEventListener("click", () => {
+                closeQuickAddSheet();
+            });
+        }
+
+        if (elements.cancelQuickAdd) {
+            elements.cancelQuickAdd.addEventListener("click", () => {
+                closeQuickAddSheet();
+            });
+        }
+
+        if (elements.quickAddModal) {
+            elements.quickAddModal.addEventListener("click", (event) => {
+                if (event.target === elements.quickAddModal) {
+                    closeQuickAddSheet();
+                }
+            });
+        }
+
         document.addEventListener("keydown", (event) => {
+            if (event.key !== "Escape") {
+                return;
+            }
+
+            if (isQuickAddOpen()) {
+                closeQuickAddSheet();
+                return;
+            }
+
             if (
-                event.key === "Escape" &&
+                elements.quickContributionModal &&
                 !elements.quickContributionModal.classList.contains("hidden")
             ) {
                 closeQuickContributionModal();

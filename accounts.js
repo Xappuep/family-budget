@@ -5,6 +5,7 @@ function renderAccountSelects() {
     const selectedTransaction = elements.transactionAccount.value;
     const selectedContributionAccount = elements.contributionAccount.value;
     const selectedQuickAccount = elements.quickContributionAccount.value;
+    const selectedQuickAddAccount = elements.quickAddAccount?.value;
     const selectedFrom = elements.transferFrom.value;
     const selectedTo = elements.transferTo.value;
 
@@ -36,6 +37,22 @@ function renderAccountSelects() {
     elements.quickContributionAccount.value = getAccountById(selectedQuickAccount)
         ? selectedQuickAccount
         : state.accounts[0]?.id || "";
+
+    if (elements.quickAddAccount) {
+        elements.quickAddAccount.innerHTML = "";
+        state.accounts.forEach((account) => {
+            const option = document.createElement("option");
+            option.value = account.id;
+            option.textContent = account.name;
+            elements.quickAddAccount.appendChild(option);
+        });
+        const preferredQuickAdd =
+            getAccountById(selectedQuickAddAccount)
+                ? selectedQuickAddAccount
+                : getPreferredTransactionAccountId();
+        elements.quickAddAccount.value = preferredQuickAdd;
+    }
+
     elements.transferFrom.value = getAccountById(selectedFrom)
         ? selectedFrom
         : state.accounts[0]?.id || "";

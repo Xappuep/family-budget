@@ -183,6 +183,22 @@
             cancelQuickContribution:
                 document.getElementById("cancelQuickContribution"),
 
+            quickAddModal: document.getElementById("quickAddModal"),
+            quickAddForm: document.getElementById("quickAddForm"),
+            quickAddType: document.getElementById("quickAddType"),
+            quickAddTypeToggle: document.getElementById("quickAddTypeToggle"),
+            quickAddAmount: document.getElementById("quickAddAmount"),
+            quickAddCategory: document.getElementById("quickAddCategory"),
+            quickAddAccount: document.getElementById("quickAddAccount"),
+            quickAddExtra: document.getElementById("quickAddExtra"),
+            quickAddDate: document.getElementById("quickAddDate"),
+            quickAddMember: document.getElementById("quickAddMember"),
+            quickAddComment: document.getElementById("quickAddComment"),
+            quickAddMessage: document.getElementById("quickAddMessage"),
+            quickAddSubmit: document.getElementById("quickAddSubmit"),
+            closeQuickAddModal: document.getElementById("closeQuickAddModal"),
+            cancelQuickAdd: document.getElementById("cancelQuickAdd"),
+
             toastContainer: document.getElementById("toastContainer"),
 
             themeToggleButton: document.getElementById("themeToggleButton"),
@@ -241,25 +257,10 @@
         }
 
         /**
-         * Кнопка «+»: раздел операций → форма → фокус на первое поле.
+         * Центральная кнопка «+»: открывает Quick Add bottom sheet.
          */
         function openMobileQuickAdd() {
-            setMobileTab("operations", { scrollToTop: false });
-
-            window.requestAnimationFrame(() => {
-                if (elements.transactionForm) {
-                    elements.transactionForm.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start"
-                    });
-                }
-
-                window.setTimeout(() => {
-                    if (elements.transactionDate) {
-                        elements.transactionDate.focus();
-                    }
-                }, 280);
-            });
+            openQuickAddSheet();
         }
 
         /**

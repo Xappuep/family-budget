@@ -969,6 +969,146 @@
         </div>
     </div>
 
+    <!-- =========================================================
+         QUICK ADD: быстрое добавление операции (mobile)
+         ========================================================= -->
+
+    <div
+        class="modal quick-add-sheet hidden"
+        id="quickAddModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quickAddTitle"
+    >
+        <div class="modal__dialog quick-add-sheet__dialog">
+            <div class="modal__header">
+                <div>
+                    <h3 id="quickAddTitle">Добавить операцию</h3>
+                </div>
+
+                <button
+                    class="icon-button"
+                    id="closeQuickAddModal"
+                    type="button"
+                    aria-label="Закрыть быстрое добавление"
+                >
+                    ✕
+                </button>
+            </div>
+
+            <form id="quickAddForm" novalidate>
+                <input id="quickAddType" type="hidden" value="expense">
+
+                <div
+                    class="quick-add-type"
+                    id="quickAddTypeToggle"
+                    role="group"
+                    aria-label="Тип операции"
+                >
+                    <button
+                        class="quick-add-type__button quick-add-type__button--active"
+                        type="button"
+                        data-quick-type="expense"
+                        aria-pressed="true"
+                    >
+                        Расход
+                    </button>
+                    <button
+                        class="quick-add-type__button"
+                        type="button"
+                        data-quick-type="income"
+                        aria-pressed="false"
+                    >
+                        Доход
+                    </button>
+                </div>
+
+                <div class="quick-add-amount">
+                    <label class="quick-add-amount__label" for="quickAddAmount">Сумма</label>
+                    <div class="quick-add-amount__control">
+                        <input
+                            id="quickAddAmount"
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            inputmode="decimal"
+                            placeholder="0"
+                            required
+                            autocomplete="off"
+                        >
+                        <span class="quick-add-amount__currency" aria-hidden="true">₽</span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="quickAddCategory">Категория</label>
+                    <input
+                        id="quickAddCategory"
+                        type="text"
+                        list="categorySuggestions"
+                        maxlength="60"
+                        placeholder="Продукты, транспорт..."
+                        required
+                        autocomplete="off"
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="quickAddAccount">Счёт</label>
+                    <select id="quickAddAccount" required></select>
+                </div>
+
+                <details class="quick-add-extra" id="quickAddExtra">
+                    <summary>Дополнительно</summary>
+                    <div class="quick-add-extra__body">
+                        <div class="field">
+                            <label for="quickAddDate">Дата</label>
+                            <input id="quickAddDate" type="date" required>
+                        </div>
+                        <div class="field">
+                            <label for="quickAddMember">Член семьи</label>
+                            <input
+                                id="quickAddMember"
+                                type="text"
+                                maxlength="60"
+                                placeholder="Например, Михаил"
+                                autocomplete="off"
+                            >
+                        </div>
+                        <div class="field">
+                            <label for="quickAddComment">Комментарий</label>
+                            <textarea
+                                id="quickAddComment"
+                                maxlength="500"
+                                placeholder="Необязательно"
+                            ></textarea>
+                        </div>
+                    </div>
+                </details>
+
+                <div class="form-message" id="quickAddMessage"></div>
+
+                <div class="form-actions quick-add-actions">
+                    <button
+                        class="button button--primary"
+                        id="quickAddSubmit"
+                        type="submit"
+                    >
+                        Добавить расход
+                    </button>
+
+                    <button
+                        class="button button--secondary"
+                        id="cancelQuickAdd"
+                        type="button"
+                    >
+                        Отмена
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Контейнер для всплывающих уведомлений -->
     <div class="toast-container" id="toastContainer"></div>
 

@@ -481,7 +481,7 @@ Voice habits: localStorage.
 * платные API / AI API;
 * store тем оформления.
 
-### Этап 8.2. Offline Signed User Licenses / License Manager — IN PROGRESS
+### Этап 8.2. Offline Signed User Licenses / License Manager — DONE
 
 Цели:
 
@@ -493,21 +493,46 @@ Voice habits: localStorage.
 * отсутствие backend;
 * отсутствие пользовательской регистрации.
 
-#### Архитектура Version 8.2
+Автоматические тесты до физической приёмки Version 8.2: **138 pass / 0 fail**.
 
-* Access metadata schema: `version: 2` (отдельно от financial `schemaVersion = 2`);
-* Installation identity: random UUID (`installation-id.js`), IndexedDB `meta/installation` + localStorage `familyBudgetInstallation_v1`;
-* User license: ECDSA signed **+ installation-bound** (`payload.installationId`);
-* Owner activation: unbound administrative / emergency access (не зависит от installationId);
-* Token format: `FB2.<payloadBase64Url>.<signatureBase64Url>`;
-* Public keys map by `kid` (`K1` сейчас); private signing key только в `.local-secrets/`;
-* Runtime `verifiedAccess` пересчитывается при каждом запуске из owner proof + signed proofs;
-* Stored `entitlements` сами по себе НЕ дают доступ;
-* `licenseProofs[]` хранятся в access metadata, НЕ в financial state / backup;
-* Local registry: `.local-secrets/licenses-registry.json` (ignored);
-* Legal information: v3 / 09.08.2026;
-* Application version: `8.2`;
-* PWA release: `20260809-3`.
+Пользовательская проверка на физическом устройстве успешно подтвердила:
+
+* обновление существующей PWA 8.1 → 8.2;
+* сохранность существующих финансовых данных;
+* сохранность owner activation после обновления;
+* отображение `APP_DISPLAY_VERSION` 8.2;
+* создание и сохранение случайного Installation ID;
+* работу кнопки «Копировать ID»;
+* корректное отображение Legal v3;
+* light/dark темы;
+* обычные финансовые операции после миграции;
+* запуск локального License Manager;
+* выпуск индивидуальной подписанной FULL_APP license;
+* Installation A: signed license успешно активирована;
+* Installation B: тот же FB2 token отклонён с installation mismatch;
+* подтверждено, что лицензия, выпущенная для Installation A, не активируется на Installation B;
+* после financial reset Installation A: финансовые данные очищены; Installation ID сохранился; signed FULL_APP license сохранилась;
+* после restart лицензия остаётся действующей.
+
+#### Финальная архитектура Version 8.2
+
+* Application: `8.2`
+* PWA RELEASE: `20260809-3`
+* PWA cache: `family-budget-shell-20260809-3`
+* User license: ECDSA P-256 / SHA-256 signed FB2 token (`FB2.<payloadBase64Url>.<signatureBase64Url>`)
+* User FULL_APP license: **installation-bound**
+* Installation identity: random UUID (не hardware fingerprint)
+* Installation storage: IndexedDB `meta/installation` + localStorage `familyBudgetInstallation_v1`
+* Access schema: `v2` (отдельно от financial)
+* Financial schemaVersion: `2`
+* Signing key: K1 private key — local only / ignored (`.local-secrets/`)
+* Application: только K1 public JWK (`LICENSE_PUBLIC_KEYS`)
+* Owner activation: отдельный административный доступ, **НЕ** привязан к Installation ID
+* User signed license: обязательная привязка к Installation ID
+* License Manager: local-only / `127.0.0.1`
+* Registry: `.local-secrets/licenses-registry.json` (ignored)
+* Runtime `verifiedAccess` пересчитывается при каждом запуске; stored `entitlements` сами по себе НЕ дают доступ
+* Legal information: v3 / 09.08.2026
 
 #### Если K1 private key потерян
 
@@ -517,14 +542,23 @@ Voice habits: localStorage.
 
 #### Известные ограничения Version 8.2
 
-* signed license нельзя подделать без private key при штатной проверке приложения;
-* user license привязана к installationId, но **не** к hardware fingerprint;
-* полная очистка всех site data создаёт новый installationId и может потребовать перевыпуска user license;
-* Version 8.2 не обеспечивает one-device hardware binding / IMEI;
-* client JS всё ещё можно модифицировать;
-* полная защита от sharing/reverse engineering потребует отдельного решения;
-* server activation НЕ входит в 8.2;
-* offline revocation вступает в силу только после выпуска приложения с обновлённым `REVOKED_LICENSE_IDS`.
+* полная ручная очистка ВСЕХ site data удаляет Installation ID;
+* после полной очистки site data создаётся новый Installation ID;
+* ранее выданная installation-bound license после этого может потребовать перевыпуска;
+* client-side JavaScript технически можно модифицировать;
+* Version 8.2 не является абсолютным DRM;
+* hardware fingerprinting не используется;
+* server activation не используется;
+* remote revocation отсутствует;
+* revocation list обновляется только вместе с новой версией приложения;
+* signed license нельзя подделать без private key при штатной проверке приложения.
+
+Итог roadmap на момент закрытия 8.2:
+
+* Этап 8 — DONE
+* Этап 8.1 — DONE
+* Этап 8.2 — DONE
+* Этап 9 — OPTIONAL
 
 Не входит:
 
@@ -619,3 +653,4 @@ Voice habits: localStorage.
 | 2026-08-08 | Этап 7 | PWA: manifest, icons, SW, install UX, offline shell, controlled update | Пользовательская проверка на Android успешно завершена |
 | 2026-08-08 | Этап 8 | IndexedDB primary persistence + auto migration from legacy localStorage; race fix pending save vs reset | Пользовательская проверка на Android успешно завершена. `npm test` — 73/73. Этап 9 не выполнялся |
 | 2026-08-09 | Этап 8.1 | Trial / access control / promo / legal: write guards, More+desktop access UI, export warning, reset preserves license | Пользовательская проверка на Android успешно завершена. `npm test` — 95/95. Этап 9 не выполнялся |
+| 2026-08-09 | Этап 8.2 | Offline signed user licenses + local License Manager; installation-bound FB2 FULL_APP; owner remains unbound | Физическая приёмка успешно завершена. `npm test` — 138/138 до приёмки. Этап 9 не выполнялся |

@@ -523,7 +523,7 @@
         function updateStorageStatusUi() {
             const versionEl = document.getElementById("appVersionLabel");
             if (versionEl) {
-                versionEl.textContent = "Версия приложения: 8.0";
+                versionEl.textContent = "Версия приложения: 8.0.1";
             }
 
             const statusEl = document.getElementById("storageBackendStatus");

@@ -46,6 +46,9 @@ test("PWA release tokens stay synchronized across index and service worker", () 
     assert.ok(shellBlock.includes("${RELEASE}"), "APP_SHELL must use RELEASE");
 
     const requiredShellFiles = [
+        "installation-id.js",
+        "license-public-keys.js",
+        "license-crypto.js",
         "access-control.js",
         "access-ui.js",
         "legal.js",
@@ -66,8 +69,48 @@ test("PWA release tokens stay synchronized across index and service worker", () 
         );
     });
 
-    assert.ok(
-        read("constants.js").includes('APP_DISPLAY_VERSION = "8.1"'),
-        "APP_DISPLAY_VERSION must be 8.1"
+    assert.equal(
+        shellBlock.includes("license-manager"),
+        false,
+        "License Manager must not be in APP_SHELL"
     );
+
+    assert.ok(
+        read("constants.js").includes('APP_DISPLAY_VERSION = "8.2"'),
+        "APP_DISPLAY_VERSION must be 8.2"
+    );
+    assert.equal(release, "20260809-3");
+});
+
+test("secret audit: .local-secrets is not tracked and public JWK has no private d", () => {
+    const { execSync } = require("node:child_process");
+    const tracked = execSync("git ls-files .local-secrets", {
+        cwd: ROOT,
+        encoding: "utf8"
+    }).trim();
+    assert.equal(tracked, "");
+
+    const publicKeys = read("license-public-keys.js");
+    assert.ok(publicKeys.includes("LICENSE_PUBLIC_KEYS"));
+    assert.ok(publicKeys.includes("K1"));
+    assert.equal(/\b"d"\s*:/.test(publicKeys), false);
+    assert.equal(publicKeys.includes("privateJwk"), false);
+
+    const appSources = [
+        "constants.js",
+        "license-public-keys.js",
+        "license-crypto.js",
+        "access-control.js",
+        "access-ui.js",
+        "index.html",
+        "LICENSE_MANAGER.md"
+    ];
+    appSources.forEach((file) => {
+        const source = read(file);
+        assert.equal(
+            /\b"d"\s*:\s*"[A-Za-z0-9_-]{20,}"/.test(source),
+            false,
+            `${file} must not contain private JWK d`
+        );
+    });
 });

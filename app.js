@@ -504,6 +504,14 @@
                 }
             }
 
+            if (typeof initializeInstallationIdentity === "function") {
+                try {
+                    await initializeInstallationIdentity();
+                } catch (error) {
+                    console.error("Ошибка инициализации ID установки:", error);
+                }
+            }
+
             if (typeof initializeAccessControl === "function") {
                 try {
                     await initializeAccessControl();

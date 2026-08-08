@@ -3,7 +3,7 @@
    Scope: ./ (только каталог приложения на GitHub Pages)
    ========================================================= */
 
-const RELEASE = "20260809-1";
+const RELEASE = "20260809-3";
 const CACHE_PREFIX = "family-budget-";
 const CACHE_NAME = `${CACHE_PREFIX}shell-${RELEASE}`;
 
@@ -20,6 +20,9 @@ const APP_SHELL = [
     `./calculations.js?v=${RELEASE}`,
     `./indexed-db.js?v=${RELEASE}`,
     `./storage.js?v=${RELEASE}`,
+    `./installation-id.js?v=${RELEASE}`,
+    `./license-public-keys.js?v=${RELEASE}`,
+    `./license-crypto.js?v=${RELEASE}`,
     `./access-control.js?v=${RELEASE}`,
     `./accounts.js?v=${RELEASE}`,
     `./transactions.js?v=${RELEASE}`,

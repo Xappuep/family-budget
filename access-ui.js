@@ -1,7 +1,7 @@
 "use strict";
 
 /* =========================================================
-   Access UI — Version 8.1
+   Access UI — Version 8.2
    Renders trial/license status and applies read-only mode.
    ========================================================= */
 
@@ -71,6 +71,32 @@ function setPromoMessage(text, tone) {
     }
 }
 
+function activationErrorMessage(reason) {
+    switch (reason) {
+        case "invalid":
+            return "Неверный код активации.";
+        case "malformed":
+        case "oversized":
+            return "Формат лицензии повреждён.";
+        case "bad_signature":
+        case "unknown_kid":
+        case "invalid_payload":
+            return "Подпись лицензии недействительна.";
+        case "installation_mismatch":
+            return "Эта лицензия выпущена для другой установки приложения.";
+        case "mismatch":
+            return "Неверный код активации.";
+        case "expired":
+            return "Лицензия больше не действует.";
+        case "revoked":
+            return "Эта лицензия отозвана.";
+        case "duplicate":
+            return "Эта лицензия уже активирована.";
+        default:
+            return "Неверный код активации.";
+    }
+}
+
 function renderAccessStatus() {
     if (typeof getAccessSnapshot !== "function") {
         return;
@@ -82,7 +108,10 @@ function renderAccessStatus() {
         if (snapshot.isExpired) {
             elements.accessStatusText.textContent = "Пробный период завершён";
         } else if (snapshot.isLicensed) {
-            elements.accessStatusText.textContent = "Активировано";
+            elements.accessStatusText.textContent =
+                snapshot.signedLicenseCount > 0 && !snapshot.ownerVerified
+                    ? "Лицензия активирована"
+                    : "Активировано";
         } else {
             elements.accessStatusText.textContent = "Пробная версия";
         }
@@ -93,8 +122,14 @@ function renderAccessStatus() {
             elements.accessRemainingText.textContent =
                 "Ваши данные сохранены на устройстве. Доступен просмотр, экспорт и удаление данных.";
         } else if (snapshot.isLicensed) {
-            elements.accessRemainingText.textContent =
-                "Полный доступ к приложению.";
+            if (snapshot.licenseIdShort && !snapshot.ownerVerified) {
+                elements.accessRemainingText.textContent =
+                    "Полный доступ к приложению. ID лицензии: " +
+                    snapshot.licenseIdShort;
+            } else {
+                elements.accessRemainingText.textContent =
+                    "Полный доступ к приложению.";
+            }
         } else {
             elements.accessRemainingText.textContent =
                 "Осталось: " + snapshot.remainingTrialLabel;
@@ -166,17 +201,14 @@ async function handlePromoActivateClick() {
         ? elements.promoCodeInput.value
         : "";
 
-    setPromoMessage("Проверка промокода…");
+    setPromoMessage("Проверка кода…");
 
     try {
         const result = await activatePromoCode(raw);
 
         if (!result || !result.ok) {
-            const reason = result && result.reason;
             setPromoMessage(
-                reason === "invalid"
-                    ? "Введите корректный промокод."
-                    : "Промокод не принят. Проверьте код и попробуйте снова.",
+                activationErrorMessage(result && result.reason),
                 "error"
             );
             return;
@@ -186,7 +218,13 @@ async function handlePromoActivateClick() {
             elements.promoCodeInput.value = "";
         }
 
-        setPromoMessage("Доступ активирован.", "success");
+        const signed = result.kind === "signed-license";
+        setPromoMessage(
+            signed
+                ? "Лицензия успешно активирована."
+                : "Приложение активировано.",
+            "success"
+        );
 
         if (typeof refreshAccessClock === "function") {
             await refreshAccessClock();
@@ -196,12 +234,79 @@ async function handlePromoActivateClick() {
         applyAccessModeToUi();
 
         if (typeof showToast === "function") {
-            showToast("Приложение активировано.");
+            showToast(
+                signed
+                    ? "Лицензия успешно активирована."
+                    : "Приложение активировано."
+            );
         }
     } catch (error) {
-        console.error("Ошибка активации промокода:", error);
+        console.error("Ошибка активации:", error);
         setPromoMessage(
-            "Не удалось проверить промокод. Попробуйте позже.",
+            "Не удалось проверить код активации. Попробуйте позже.",
+            "error"
+        );
+    }
+}
+
+function renderInstallationIdUi() {
+    if (!elements.installationIdValue) {
+        return;
+    }
+
+    const id =
+        typeof getInstallationId === "function" ? getInstallationId() : null;
+    elements.installationIdValue.value = id || "—";
+}
+
+async function copyTextWithFallback(text) {
+    const value = String(text || "");
+    if (!value) {
+        return false;
+    }
+
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        try {
+            await navigator.clipboard.writeText(value);
+            return true;
+        } catch (_error) {
+            // fall through
+        }
+    }
+
+    try {
+        const area = document.createElement("textarea");
+        area.value = value;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.left = "-9999px";
+        document.body.appendChild(area);
+        area.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(area);
+        return ok;
+    } catch (_error) {
+        return false;
+    }
+}
+
+async function handleCopyInstallationIdClick() {
+    const id =
+        typeof getInstallationId === "function" ? getInstallationId() : null;
+    if (!id) {
+        setPromoMessage("ID установки ещё не готов.", "error");
+        return;
+    }
+
+    const ok = await copyTextWithFallback(id);
+    if (ok) {
+        setPromoMessage("ID установки скопирован.", "success");
+        if (typeof showToast === "function") {
+            showToast("ID установки скопирован.");
+        }
+    } else {
+        setPromoMessage(
+            "Не удалось скопировать ID. Выделите поле и скопируйте вручную.",
             "error"
         );
     }
@@ -231,6 +336,14 @@ function initAccessUi() {
         );
     }
 
+    if (elements.installationIdCopyButton) {
+        elements.installationIdCopyButton.addEventListener(
+            "click",
+            handleCopyInstallationIdClick
+        );
+    }
+
+    renderInstallationIdUi();
     renderAccessStatus();
     applyAccessModeToUi();
 }

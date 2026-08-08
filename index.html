@@ -46,7 +46,7 @@
         Не использовать случайное значение на каждый запрос.
         Должна совпадать с RELEASE / CACHE_NAME в service-worker.js.
     -->
-    <link rel="stylesheet" href="styles.css?v=20260809-1">
+    <link rel="stylesheet" href="styles.css?v=20260809-3">
 </head>
 
 <body data-mobile-tab="home" class="app-booting">
@@ -994,17 +994,46 @@
             <div style="height: 16px;"></div>
 
             <div class="card form-card access-settings-card" id="promoPanel">
-                <h3>Промокод</h3>
+                <h3>Активация и промокоды</h3>
                 <p class="access-panel__hint">
-                    Промокоды могут предоставлять доступ к приложению,
-                    дополнительным функциям или темам оформления.
+                    Введите индивидуальный код активации приложения
+                    или промокод для дополнительных возможностей.
                 </p>
                 <div class="field">
-                    <label for="promoCodeInput">Промокод или код активации</label>
+                    <label for="installationIdValue">ID установки</label>
+                    <input
+                        id="installationIdValue"
+                        type="text"
+                        readonly
+                        autocomplete="off"
+                        spellcheck="false"
+                    >
+                </div>
+                <div class="mobile-tools__actions">
+                    <button
+                        class="button"
+                        id="installationIdCopyButton"
+                        type="button"
+                    >
+                        Копировать ID
+                    </button>
+                </div>
+                <p class="access-panel__hint">
+                    Для получения индивидуальной лицензии
+                    скопируйте ID установки и передайте его
+                    правообладателю приложения.
+                </p>
+                <p class="access-panel__hint">
+                    ID установки создаётся случайным образом
+                    и не содержит серийный номер телефона,
+                    IMEI или другие аппаратные идентификаторы.
+                </p>
+                <div class="field">
+                    <label for="promoCodeInput">Код активации или промокод</label>
                     <input
                         id="promoCodeInput"
                         type="text"
-                        maxlength="80"
+                        maxlength="2048"
                         autocomplete="off"
                         spellcheck="false"
                         inputmode="text"
@@ -1048,7 +1077,7 @@
                                 или условиями используемой платформы размещения.
                             </p>
                             <p class="legal-details__version">
-                                Версия правовой информации: 09.08.2026 / v1
+                                Версия правовой информации: 09.08.2026 / v3
                             </p>
                         </div>
                     </details>
@@ -1076,6 +1105,41 @@
                             <p>
                                 Техническая информация trial/license
                                 также хранится локально на устройстве.
+                            </p>
+                            <p>
+                                Для проверки индивидуальной лицензии приложение
+                                обрабатывает локально технические сведения лицензии,
+                                включая случайный идентификатор лицензии,
+                                дату её выдачи и предоставленные права доступа.
+                            </p>
+                            <p>
+                                Проверка цифровой подписи выполняется локально.
+                                Сведения об активации не отправляются
+                                на сервер разработчика, поскольку Version 8.2
+                                не использует сервер активации.
+                            </p>
+                            <p>
+                                Для выпуска индивидуальной лицензии приложение
+                                создаёт случайный технический идентификатор установки.
+                            </p>
+                            <p>
+                                Этот идентификатор не формируется на основе IMEI,
+                                серийного номера устройства или иных аппаратных
+                                идентификаторов.
+                            </p>
+                            <p>
+                                Приложение автоматически не отправляет
+                                ID установки разработчику.
+                            </p>
+                            <p>
+                                Для получения индивидуальной лицензии пользователь
+                                может самостоятельно скопировать ID установки
+                                и передать его правообладателю.
+                            </p>
+                            <p>
+                                Переданный ID установки может храниться
+                                в локальном менеджере лицензий правообладателя
+                                для выпуска и учёта соответствующей лицензии.
                             </p>
                             <p>
                                 Приложение размещается с использованием GitHub Pages.
@@ -1173,6 +1237,33 @@
                                 требуется активация доступа.
                             </p>
                             <p>
+                                Индивидуальный код активации подтверждает
+                                предоставление права доступа к соответствующим
+                                возможностям приложения.
+                            </p>
+                            <p>
+                                Код активации предназначен для использования
+                                получателем, которому он предоставлен.
+                                Передача действующего кода третьим лицам
+                                без согласия правообладателя не допускается,
+                                если иное прямо не согласовано правообладателем
+                                или не предусмотрено применимым законодательством.
+                            </p>
+                            <p>
+                                Индивидуальная лицензия может быть технически
+                                привязана к случайному ID конкретной установки приложения.
+                            </p>
+                            <p>
+                                Код активации, выпущенный для одного ID установки,
+                                не предназначен для активации другой установки.
+                            </p>
+                            <p>
+                                При полной очистке данных приложения или браузера
+                                ID установки может быть утрачен и создан заново.
+                                В таком случае ранее выданный код может потребовать
+                                переоформления правообладателем.
+                            </p>
+                            <p>
                                 Пользователю рекомендуется регулярно создавать
                                 резервные копии важных данных.
                             </p>
@@ -1191,7 +1282,7 @@
                                 используется для голосового ввода,
                                 если поддерживается устройством.
                             </p>
-                            <p>На момент Version 8.1 приложение НЕ использует:</p>
+                            <p>На момент Version 8.2 приложение НЕ использует:</p>
                             <ul>
                                 <li>рекламные сети;</li>
                                 <li>пользовательскую аналитику разработчика;</li>
@@ -1624,32 +1715,35 @@
         <span class="theme-toggle__label" id="themeToggleLabel">Светлая</span>
     </button>
     <!--
-        Локальные скрипты: та же asset version, что у styles.css (?v=20260809-1).
+        Локальные скрипты: та же asset version, что у styles.css (?v=20260809-3).
         Перед публикацией обновлять версию у всех CSS/JS синхронно.
         RELEASE в service-worker.js должен совпадать.
     -->
-    <script src="constants.js?v=20260809-1"></script>
-    <script src="state.js?v=20260809-1"></script>
-    <script src="money.js?v=20260809-1"></script>
-    <script src="dates.js?v=20260809-1"></script>
-    <script src="formatting.js?v=20260809-1"></script>
-    <script src="ui.js?v=20260809-1"></script>
-    <script src="calculations.js?v=20260809-1"></script>
-    <script src="indexed-db.js?v=20260809-1"></script>
-    <script src="storage.js?v=20260809-1"></script>
-    <script src="access-control.js?v=20260809-1"></script>
-    <script src="accounts.js?v=20260809-1"></script>
-    <script src="transactions.js?v=20260809-1"></script>
-    <script src="voice-parser.js?v=20260809-1"></script>
-    <script src="voice-habits.js?v=20260809-1"></script>
-    <script src="voice.js?v=20260809-1"></script>
-    <script src="goals.js?v=20260809-1"></script>
-    <script src="contributions.js?v=20260809-1"></script>
-    <script src="analytics.js?v=20260809-1"></script>
-    <script src="backup.js?v=20260809-1"></script>
-    <script src="access-ui.js?v=20260809-1"></script>
-    <script src="legal.js?v=20260809-1"></script>
-    <script src="pwa.js?v=20260809-1"></script>
-    <script src="app.js?v=20260809-1"></script>
+    <script src="constants.js?v=20260809-3"></script>
+    <script src="state.js?v=20260809-3"></script>
+    <script src="money.js?v=20260809-3"></script>
+    <script src="dates.js?v=20260809-3"></script>
+    <script src="formatting.js?v=20260809-3"></script>
+    <script src="ui.js?v=20260809-3"></script>
+    <script src="calculations.js?v=20260809-3"></script>
+    <script src="indexed-db.js?v=20260809-3"></script>
+    <script src="storage.js?v=20260809-3"></script>
+    <script src="installation-id.js?v=20260809-3"></script>
+    <script src="license-public-keys.js?v=20260809-3"></script>
+    <script src="license-crypto.js?v=20260809-3"></script>
+    <script src="access-control.js?v=20260809-3"></script>
+    <script src="accounts.js?v=20260809-3"></script>
+    <script src="transactions.js?v=20260809-3"></script>
+    <script src="voice-parser.js?v=20260809-3"></script>
+    <script src="voice-habits.js?v=20260809-3"></script>
+    <script src="voice.js?v=20260809-3"></script>
+    <script src="goals.js?v=20260809-3"></script>
+    <script src="contributions.js?v=20260809-3"></script>
+    <script src="analytics.js?v=20260809-3"></script>
+    <script src="backup.js?v=20260809-3"></script>
+    <script src="access-ui.js?v=20260809-3"></script>
+    <script src="legal.js?v=20260809-3"></script>
+    <script src="pwa.js?v=20260809-3"></script>
+    <script src="app.js?v=20260809-3"></script>
 </body>
 </html>

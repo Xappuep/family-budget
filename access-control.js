@@ -1,12 +1,13 @@
 "use strict";
 
 /* =========================================================
-   Access control — Version 8.1
-   Soft local trial / licensing (not DRM).
-   Separate from financial state / schemaVersion.
+   Access control — Version 8.2
+   Soft licensing + offline signed FB2 licenses.
+   Stored entitlements are NOT trusted; only verified proofs.
    ========================================================= */
 
 let accessRuntimeRecord = null;
+let verifiedAccessRuntime = null;
 let accessAdapters = null;
 
 function createDefaultAccessAdapters(overrides = {}) {
@@ -42,6 +43,22 @@ function createDefaultAccessAdapters(overrides = {}) {
         getOwnerHashes() {
             return [OWNER_FULL_APP_CODE_SHA256];
         },
+        getRevokedLicenseIds() {
+            return typeof REVOKED_LICENSE_IDS !== "undefined"
+                ? REVOKED_LICENSE_IDS
+                : [];
+        },
+        getPublicKeysMap() {
+            return typeof LICENSE_PUBLIC_KEYS !== "undefined"
+                ? LICENSE_PUBLIC_KEYS
+                : {};
+        },
+        getCurrentInstallationId() {
+            if (typeof getInstallationId === "function") {
+                return getInstallationId();
+            }
+            return null;
+        },
         async sha256Hex(text) {
             if (
                 typeof crypto !== "undefined" &&
@@ -54,8 +71,18 @@ function createDefaultAccessAdapters(overrides = {}) {
                     .map((byte) => byte.toString(16).padStart(2, "0"))
                     .join("");
             }
-
             throw new Error("SHA-256 is unavailable in this environment");
+        },
+        async verifySignedToken(raw, nowMs) {
+            if (typeof verifySignedLicenseToken !== "function") {
+                return { ok: false, reason: "unavailable" };
+            }
+            return verifySignedLicenseToken(raw, {
+                publicKeysMap: this.getPublicKeysMap(),
+                revokedIds: this.getRevokedLicenseIds(),
+                now: typeof nowMs === "number" ? nowMs : this.now(),
+                expectedInstallationId: this.getCurrentInstallationId()
+            });
         },
         ...overrides
     };
@@ -80,6 +107,13 @@ function normalizePromoCode(rawInput) {
         .replace(/[\s\-]+/g, "");
 }
 
+function normalizeActivationInput(rawInput) {
+    return String(rawInput || "")
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .trim()
+        .replace(/\s+/g, "");
+}
+
 function isValidAccessTimestamp(value) {
     return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
@@ -87,17 +121,55 @@ function isValidAccessTimestamp(value) {
 function createFreshAccessRecord(nowMs) {
     return {
         key: FAMILY_BUDGET_ACCESS_META_KEY,
-        version: 1,
+        version: ACCESS_RECORD_VERSION,
         firstStartedAt: nowMs,
         maxSeenAt: nowMs,
         entitlements: [],
         activationHash: null,
         activatedAt: null,
-        activationKind: null
+        activationKind: null,
+        licenseProofs: []
     };
 }
 
-function sanitizeAccessRecord(raw) {
+function sanitizeLicenseProofs(raw) {
+    if (!Array.isArray(raw)) {
+        return [];
+    }
+    const seen = new Set();
+    const out = [];
+    raw.forEach((item) => {
+        if (typeof item !== "string") {
+            return;
+        }
+        const token = normalizeActivationInput(item);
+        if (!token || !token.startsWith("FB2.") || seen.has(token)) {
+            return;
+        }
+        if (token.length > ACTIVATION_CODE_MAX_LENGTH) {
+            return;
+        }
+        seen.add(token);
+        out.push(token);
+    });
+    return out;
+}
+
+function migrateAccessRecordToV2(raw) {
+    const base = sanitizeAccessRecordShape(raw);
+    if (!base) {
+        return null;
+    }
+    return {
+        ...base,
+        version: ACCESS_RECORD_VERSION,
+        licenseProofs: sanitizeLicenseProofs(
+            raw.licenseProofs || (raw.licenseProof ? [raw.licenseProof] : [])
+        )
+    };
+}
+
+function sanitizeAccessRecordShape(raw) {
     if (!raw || typeof raw !== "object") {
         return null;
     }
@@ -115,7 +187,7 @@ function sanitizeAccessRecord(raw) {
 
     return {
         key: FAMILY_BUDGET_ACCESS_META_KEY,
-        version: 1,
+        version: Number(raw.version) === 1 ? 1 : ACCESS_RECORD_VERSION,
         firstStartedAt,
         maxSeenAt: isValidAccessTimestamp(maxSeenAt)
             ? maxSeenAt
@@ -127,8 +199,17 @@ function sanitizeAccessRecord(raw) {
             ? Number(raw.activatedAt)
             : null,
         activationKind:
-            typeof raw.activationKind === "string" ? raw.activationKind : null
+            typeof raw.activationKind === "string" ? raw.activationKind : null,
+        licenseProofs: sanitizeLicenseProofs(raw.licenseProofs)
     };
+}
+
+function sanitizeAccessRecord(raw) {
+    const shape = sanitizeAccessRecordShape(raw);
+    if (!shape) {
+        return null;
+    }
+    return migrateAccessRecordToV2(shape);
 }
 
 function mergeAccessRecords(primary, secondary) {
@@ -145,22 +226,28 @@ function mergeAccessRecords(primary, secondary) {
         return a;
     }
 
-    const entitlements = Array.from(
-        new Set([...(a.entitlements || []), ...(b.entitlements || [])])
-    );
-
-    const preferLicensed = a.activationHash ? a : b.activationHash ? b : a;
+    const preferOwner =
+        a.activationKind === ACTIVATION_KIND_OWNER && a.activationHash
+            ? a
+            : b.activationKind === ACTIVATION_KIND_OWNER && b.activationHash
+              ? b
+              : a.activationHash
+                ? a
+                : b;
 
     return {
         key: FAMILY_BUDGET_ACCESS_META_KEY,
-        version: 1,
+        version: ACCESS_RECORD_VERSION,
         firstStartedAt: Math.min(a.firstStartedAt, b.firstStartedAt),
         maxSeenAt: Math.max(a.maxSeenAt, b.maxSeenAt),
-        entitlements:
-            entitlements.length > 0 ? entitlements : preferLicensed.entitlements,
-        activationHash: preferLicensed.activationHash,
-        activatedAt: preferLicensed.activatedAt,
-        activationKind: preferLicensed.activationKind
+        entitlements: [],
+        activationHash: preferOwner.activationHash,
+        activatedAt: preferOwner.activatedAt,
+        activationKind: preferOwner.activationKind,
+        licenseProofs: sanitizeLicenseProofs([
+            ...a.licenseProofs,
+            ...b.licenseProofs
+        ])
     };
 }
 
@@ -169,39 +256,92 @@ function computeEffectiveNow(record, wallClockMs) {
     return Math.max(Number(wallClockMs) || 0, maxSeen);
 }
 
-function hasEntitlementInRecord(record, entitlement) {
-    const safe = sanitizeAccessRecord(record);
-    return Boolean(safe && safe.entitlements.includes(entitlement));
+function createEmptyVerifiedAccess(effectiveNowMs) {
+    return {
+        effectiveNow: effectiveNowMs,
+        entitlements: [],
+        sources: [],
+        ownerVerified: false,
+        signedLicenses: [],
+        status: ACCESS_STATUS.TRIAL,
+        remainingTrialMs: 0
+    };
 }
 
-function deriveAccessStatus(record, effectiveNowMs, trialDurationMs) {
+async function computeVerifiedAccess(record, adapters) {
+    const wallClock = adapters.now();
     const safe = sanitizeAccessRecord(record);
-    if (!safe) {
-        return ACCESS_STATUS.TRIAL;
+    const effectiveNow = computeEffectiveNow(safe, wallClock);
+    const verified = createEmptyVerifiedAccess(effectiveNow);
+    const entitlementSet = new Set();
+
+    if (
+        safe &&
+        safe.activationKind === ACTIVATION_KIND_OWNER &&
+        typeof safe.activationHash === "string" &&
+        adapters.getOwnerHashes().includes(safe.activationHash)
+    ) {
+        verified.ownerVerified = true;
+        entitlementSet.add(ACCESS_ENTITLEMENT.FULL_APP);
+        verified.sources.push({ kind: "owner" });
     }
 
-    if (hasEntitlementInRecord(safe, ACCESS_ENTITLEMENT.FULL_APP)) {
-        return safe.activationKind === "owner"
+    if (safe) {
+        for (const token of safe.licenseProofs) {
+            const result = await adapters.verifySignedToken(token, effectiveNow);
+            if (!result || !result.ok) {
+                continue;
+            }
+            const payload = result.payload;
+            if (
+                payload.expiresAt !== null &&
+                payload.expiresAt !== undefined &&
+                Number(payload.expiresAt) <= effectiveNow
+            ) {
+                continue;
+            }
+            (payload.entitlements || []).forEach((item) =>
+                entitlementSet.add(item)
+            );
+            verified.signedLicenses.push({
+                licenseId: payload.licenseId,
+                entitlements: payload.entitlements || [],
+                expiresAt: payload.expiresAt,
+                kid: payload.kid
+            });
+            verified.sources.push({
+                kind: "signed-license",
+                licenseId: payload.licenseId
+            });
+        }
+    }
+
+    verified.entitlements = Array.from(entitlementSet);
+
+    const hasFullApp = verified.entitlements.includes(
+        ACCESS_ENTITLEMENT.FULL_APP
+    );
+
+    if (hasFullApp) {
+        verified.status = verified.ownerVerified
             ? ACCESS_STATUS.OWNER
             : ACCESS_STATUS.LICENSED;
+        verified.remainingTrialMs = 0;
+    } else if (safe) {
+        const elapsed = Math.max(0, effectiveNow - safe.firstStartedAt);
+        if (elapsed >= TRIAL_DURATION_MS) {
+            verified.status = ACCESS_STATUS.EXPIRED;
+            verified.remainingTrialMs = 0;
+        } else {
+            verified.status = ACCESS_STATUS.TRIAL;
+            verified.remainingTrialMs = TRIAL_DURATION_MS - elapsed;
+        }
+    } else {
+        verified.status = ACCESS_STATUS.TRIAL;
+        verified.remainingTrialMs = TRIAL_DURATION_MS;
     }
 
-    const elapsed = Math.max(0, effectiveNowMs - safe.firstStartedAt);
-    if (elapsed >= trialDurationMs) {
-        return ACCESS_STATUS.EXPIRED;
-    }
-
-    return ACCESS_STATUS.TRIAL;
-}
-
-function getRemainingTrialMs(record, effectiveNowMs, trialDurationMs) {
-    const safe = sanitizeAccessRecord(record);
-    if (!safe || hasEntitlementInRecord(safe, ACCESS_ENTITLEMENT.FULL_APP)) {
-        return 0;
-    }
-
-    const endsAt = safe.firstStartedAt + trialDurationMs;
-    return Math.max(0, endsAt - effectiveNowMs);
+    return verified;
 }
 
 function formatRemainingTrial(ms) {
@@ -220,34 +360,13 @@ function formatRemainingTrial(ms) {
 }
 
 function touchAccessRecord(record, wallClockMs) {
-    const safe = sanitizeAccessRecord(record) || createFreshAccessRecord(wallClockMs);
+    const safe =
+        sanitizeAccessRecord(record) || createFreshAccessRecord(wallClockMs);
     const effectiveNow = computeEffectiveNow(safe, wallClockMs);
     return {
         ...safe,
+        version: ACCESS_RECORD_VERSION,
         maxSeenAt: Math.max(safe.maxSeenAt, effectiveNow)
-    };
-}
-
-function applyLicenseToRecord(record, options) {
-    const {
-        activationHash,
-        activatedAt,
-        activationKind = "promo",
-        entitlements = [ACCESS_ENTITLEMENT.FULL_APP]
-    } = options;
-
-    const safe = sanitizeAccessRecord(record);
-    if (!safe) {
-        return null;
-    }
-
-    return {
-        ...safe,
-        entitlements: Array.from(new Set(entitlements)),
-        activationHash,
-        activatedAt,
-        activationKind,
-        maxSeenAt: Math.max(safe.maxSeenAt, activatedAt)
     };
 }
 
@@ -266,6 +385,7 @@ async function persistAccessRecord(record) {
     }
 
     accessRuntimeRecord = safe;
+    verifiedAccessRuntime = await computeVerifiedAccess(safe, adapters);
     return safe;
 }
 
@@ -297,38 +417,50 @@ function getAccessRecord() {
     return sanitizeAccessRecord(accessRuntimeRecord);
 }
 
+function getVerifiedAccess() {
+    return verifiedAccessRuntime;
+}
+
 function getAccessSnapshot() {
     const adapters = getAccessAdapters();
     const record = getAccessRecord();
-    const wallClock = adapters.now();
-    const effectiveNow = computeEffectiveNow(record, wallClock);
-    const status = deriveAccessStatus(record, effectiveNow, TRIAL_DURATION_MS);
-    const remainingMs = getRemainingTrialMs(
-        record,
-        effectiveNow,
-        TRIAL_DURATION_MS
-    );
+    const verified =
+        verifiedAccessRuntime ||
+        createEmptyVerifiedAccess(adapters.now());
 
     const uiStatus =
-        status === ACCESS_STATUS.OWNER ? ACCESS_STATUS.LICENSED : status;
+        verified.status === ACCESS_STATUS.OWNER
+            ? ACCESS_STATUS.LICENSED
+            : verified.status;
+
+    const primaryLicense = verified.signedLicenses[0] || null;
 
     return {
         status: uiStatus,
-        internalStatus: status,
+        internalStatus: verified.status,
         firstStartedAt: record?.firstStartedAt || null,
         maxSeenAt: record?.maxSeenAt || null,
-        entitlements: record?.entitlements || [],
-        remainingTrialMs: remainingMs,
-        remainingTrialLabel: formatRemainingTrial(remainingMs),
+        entitlements: verified.entitlements.slice(),
+        remainingTrialMs: verified.remainingTrialMs,
+        remainingTrialLabel: formatRemainingTrial(verified.remainingTrialMs),
         isLicensed:
-            status === ACCESS_STATUS.LICENSED || status === ACCESS_STATUS.OWNER,
-        isTrial: status === ACCESS_STATUS.TRIAL,
-        isExpired: status === ACCESS_STATUS.EXPIRED
+            verified.status === ACCESS_STATUS.LICENSED ||
+            verified.status === ACCESS_STATUS.OWNER,
+        isTrial: verified.status === ACCESS_STATUS.TRIAL,
+        isExpired: verified.status === ACCESS_STATUS.EXPIRED,
+        ownerVerified: verified.ownerVerified,
+        licenseIdShort: primaryLicense
+            ? String(primaryLicense.licenseId).slice(0, 8)
+            : null,
+        signedLicenseCount: verified.signedLicenses.length
     };
 }
 
 function hasEntitlement(entitlement) {
-    return hasEntitlementInRecord(getAccessRecord(), entitlement);
+    const verified = getVerifiedAccess();
+    return Boolean(
+        verified && verified.entitlements.includes(entitlement)
+    );
 }
 
 function hasFinancialWriteAccess() {
@@ -368,15 +500,13 @@ async function refreshAccessClock() {
     return getAccessSnapshot();
 }
 
-async function activatePromoCode(rawInput, options = {}) {
+async function activateOwnerCode(rawInput, options = {}) {
     const adapters = getAccessAdapters();
     const normalized = normalizePromoCode(rawInput);
+    const maxLen = ACTIVATION_CODE_MAX_LENGTH || PROMO_CODE_MAX_LENGTH;
 
-    if (!normalized || normalized.length > PROMO_CODE_MAX_LENGTH) {
-        return {
-            ok: false,
-            reason: "invalid"
-        };
+    if (!normalized || normalized.length > maxLen) {
+        return { ok: false, reason: "invalid" };
     }
 
     const hash = await adapters.sha256Hex(normalized);
@@ -386,43 +516,137 @@ async function activatePromoCode(rawInput, options = {}) {
     ]);
 
     if (!allowed.has(hash)) {
-        return {
-            ok: false,
-            reason: "mismatch"
-        };
+        return { ok: false, reason: "mismatch" };
     }
 
     const now = adapters.now();
-    const current =
-        getAccessRecord() || createFreshAccessRecord(now);
-    const next = applyLicenseToRecord(current, {
+    const current = getAccessRecord() || createFreshAccessRecord(now);
+    const next = {
+        ...current,
+        version: ACCESS_RECORD_VERSION,
+        entitlements: [],
         activationHash: hash,
         activatedAt: now,
         activationKind: adapters.getOwnerHashes().includes(hash)
-            ? "owner"
+            ? ACTIVATION_KIND_OWNER
             : "promo",
-        entitlements: [ACCESS_ENTITLEMENT.FULL_APP]
-    });
+        maxSeenAt: Math.max(current.maxSeenAt, now),
+        licenseProofs: current.licenseProofs || []
+    };
 
     await persistAccessRecord(next);
 
     return {
         ok: true,
+        kind: "owner",
         snapshot: getAccessSnapshot()
     };
+}
+
+async function activateSignedLicenseToken(rawInput) {
+    const adapters = getAccessAdapters();
+    const token = normalizeActivationInput(rawInput);
+
+    if (!token || token.length > ACTIVATION_CODE_MAX_LENGTH) {
+        return { ok: false, reason: "invalid" };
+    }
+
+    if (typeof isFb2Token === "function" && !isFb2Token(token)) {
+        return { ok: false, reason: "malformed" };
+    }
+
+    const now = adapters.now();
+    const current = getAccessRecord() || createFreshAccessRecord(now);
+    const verification = await adapters.verifySignedToken(token);
+
+    if (!verification || !verification.ok) {
+        const reason = verification && verification.reason;
+        if (reason === "revoked") {
+            return { ok: false, reason: "revoked" };
+        }
+        if (reason === "expired") {
+            return { ok: false, reason: "expired" };
+        }
+        if (reason === "installation_mismatch") {
+            return { ok: false, reason: "installation_mismatch" };
+        }
+        if (reason === "bad_signature") {
+            return { ok: false, reason: "bad_signature" };
+        }
+        if (reason === "malformed" || reason === "oversized") {
+            return { ok: false, reason: "malformed" };
+        }
+        return { ok: false, reason: "bad_signature" };
+    }
+
+    const licenseId = verification.payload.licenseId;
+    const existingProofs = current.licenseProofs || [];
+
+    for (const existing of existingProofs) {
+        const existingCheck = await adapters.verifySignedToken(existing);
+        if (
+            existingCheck &&
+            existingCheck.ok &&
+            existingCheck.payload &&
+            existingCheck.payload.licenseId === licenseId
+        ) {
+            return { ok: false, reason: "duplicate", licenseId };
+        }
+    }
+
+    const next = {
+        ...current,
+        version: ACCESS_RECORD_VERSION,
+        entitlements: [],
+        activationKind:
+            current.activationKind === ACTIVATION_KIND_OWNER
+                ? ACTIVATION_KIND_OWNER
+                : ACTIVATION_KIND_SIGNED,
+        maxSeenAt: Math.max(current.maxSeenAt, now),
+        licenseProofs: sanitizeLicenseProofs([...existingProofs, token])
+    };
+
+    if (!next.activationHash && next.activationKind === ACTIVATION_KIND_SIGNED) {
+        next.activatedAt = now;
+    }
+
+    await persistAccessRecord(next);
+
+    return {
+        ok: true,
+        kind: "signed-license",
+        licenseId,
+        snapshot: getAccessSnapshot()
+    };
+}
+
+async function activatePromoCode(rawInput, options = {}) {
+    const trimmed = normalizeActivationInput(rawInput);
+
+    if (!trimmed) {
+        return { ok: false, reason: "invalid" };
+    }
+
+    if (
+        (typeof isFb2Token === "function" && isFb2Token(trimmed)) ||
+        trimmed.startsWith("FB2.")
+    ) {
+        return activateSignedLicenseToken(trimmed);
+    }
+
+    return activateOwnerCode(rawInput, options);
 }
 
 /** Pure helpers exported for unit tests. */
 var AccessControlPure = {
     normalizePromoCode,
+    normalizeActivationInput,
     createFreshAccessRecord,
     sanitizeAccessRecord,
+    migrateAccessRecordToV2,
     mergeAccessRecords,
     computeEffectiveNow,
-    deriveAccessStatus,
-    getRemainingTrialMs,
     formatRemainingTrial,
     touchAccessRecord,
-    applyLicenseToRecord,
-    hasEntitlementInRecord
+    sanitizeLicenseProofs
 };

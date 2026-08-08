@@ -481,6 +481,60 @@ Voice habits: localStorage.
 * платные API / AI API;
 * store тем оформления.
 
+### Этап 8.2. Offline Signed User Licenses / License Manager — IN PROGRESS
+
+Цели:
+
+* уникальные пользовательские лицензии;
+* offline digital signature (ECDSA P-256 / SHA-256, Web Crypto);
+* локальный License Manager владельца (`npm run license-manager` / `LICENSE_MANAGER.cmd`);
+* сохранение owner activation Version 8.1 как аварийного/административного способа;
+* future entitlement architecture (`FULL_APP`, `THEME_*`, `FEATURE_*`);
+* отсутствие backend;
+* отсутствие пользовательской регистрации.
+
+#### Архитектура Version 8.2
+
+* Access metadata schema: `version: 2` (отдельно от financial `schemaVersion = 2`);
+* Installation identity: random UUID (`installation-id.js`), IndexedDB `meta/installation` + localStorage `familyBudgetInstallation_v1`;
+* User license: ECDSA signed **+ installation-bound** (`payload.installationId`);
+* Owner activation: unbound administrative / emergency access (не зависит от installationId);
+* Token format: `FB2.<payloadBase64Url>.<signatureBase64Url>`;
+* Public keys map by `kid` (`K1` сейчас); private signing key только в `.local-secrets/`;
+* Runtime `verifiedAccess` пересчитывается при каждом запуске из owner proof + signed proofs;
+* Stored `entitlements` сами по себе НЕ дают доступ;
+* `licenseProofs[]` хранятся в access metadata, НЕ в financial state / backup;
+* Local registry: `.local-secrets/licenses-registry.json` (ignored);
+* Legal information: v3 / 09.08.2026;
+* Application version: `8.2`;
+* PWA release: `20260809-3`.
+
+#### Если K1 private key потерян
+
+* ранее выданные K1 licenses продолжат проверяться существующим public key;
+* новые K1 licenses выпустить будет невозможно;
+* в будущем можно создать K2 и добавить его public key, не удаляя K1 public key.
+
+#### Известные ограничения Version 8.2
+
+* signed license нельзя подделать без private key при штатной проверке приложения;
+* user license привязана к installationId, но **не** к hardware fingerprint;
+* полная очистка всех site data создаёт новый installationId и может потребовать перевыпуска user license;
+* Version 8.2 не обеспечивает one-device hardware binding / IMEI;
+* client JS всё ещё можно модифицировать;
+* полная защита от sharing/reverse engineering потребует отдельного решения;
+* server activation НЕ входит в 8.2;
+* offline revocation вступает в силу только после выпуска приложения с обновлённым `REVOKED_LICENSE_IDS`.
+
+Не входит:
+
+* Этап 9 / sync;
+* backend / Firebase / Supabase;
+* device fingerprint / IMEI / advertising ID;
+* theme marketplace;
+* remote revocation API;
+* payment / Prodamus.
+
 ### Этап 9. Синхронизация нескольких устройств — OPTIONAL
 
 Не реализовывать без отдельного решения владельца проекта.

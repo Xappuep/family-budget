@@ -219,7 +219,7 @@ async function clearIndexedDbFinancialState() {
     const db = await openFamilyBudgetDatabase();
     const transaction = db.transaction(["appState", "meta"], "readwrite");
     transaction.objectStore("appState").delete(FAMILY_BUDGET_APP_STATE_KEY);
-    // Only financial storage meta — never delete access/license metadata.
+    // Only financial storage meta — never delete access/license/installation metadata.
     transaction.objectStore("meta").delete(FAMILY_BUDGET_META_KEY);
     await transactionDone(transaction);
 }

@@ -261,6 +261,10 @@
             promoCodeInput: document.getElementById("promoCodeInput"),
             promoActivateButton: document.getElementById("promoActivateButton"),
             promoMessage: document.getElementById("promoMessage"),
+            installationIdValue: document.getElementById("installationIdValue"),
+            installationIdCopyButton: document.getElementById(
+                "installationIdCopyButton"
+            ),
             legalPanel: document.getElementById("legalPanel")
         };
 

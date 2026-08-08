@@ -20,6 +20,18 @@ function loadAccessModule() {
         Boolean,
         Object,
         Promise,
+        TextEncoder,
+        TextDecoder,
+        Buffer,
+        Uint8Array,
+        ArrayBuffer,
+        crypto: crypto.webcrypto,
+        atob(str) {
+            return Buffer.from(str, "base64").toString("binary");
+        },
+        btoa(str) {
+            return Buffer.from(str, "binary").toString("base64");
+        },
         localStorage: {
             _data: Object.create(null),
             getItem(key) {
@@ -40,7 +52,12 @@ function loadAccessModule() {
     };
 
     vm.createContext(context);
-    ["constants.js", "access-control.js"].forEach((file) => {
+    [
+        "constants.js",
+        "license-public-keys.js",
+        "license-crypto.js",
+        "access-control.js"
+    ].forEach((file) => {
         vm.runInContext(
             fs.readFileSync(path.join(__dirname, "..", file), "utf8"),
             context
@@ -55,7 +72,10 @@ function loadAccessModule() {
             ACCESS_STATUS,
             ACCESS_ENTITLEMENT,
             OWNER_FULL_APP_CODE_SHA256,
-            FINANCIAL_WRITE_DENIED_MESSAGE
+            FINANCIAL_WRITE_DENIED_MESSAGE,
+            ACCESS_RECORD_VERSION,
+            ACTIVATION_KIND_OWNER,
+            ACTIVATION_KIND_SIGNED
         })`,
         context
     );
@@ -72,7 +92,10 @@ async function bootAccess(ctx, options = {}) {
         now = 1_700_000_000_000,
         local: initialLocal = null,
         idb = null,
-        extraHashes = []
+        extraHashes = [],
+        publicKeysMap = null,
+        revokedIds = [],
+        installationId = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
     } = options;
 
     let clock = now;
@@ -101,6 +124,15 @@ async function bootAccess(ctx, options = {}) {
             getOwnerHashes() {
                 return [ctx.keys.OWNER_FULL_APP_CODE_SHA256, ...extraHashes];
             },
+            getPublicKeysMap() {
+                return publicKeysMap || ctx.LICENSE_PUBLIC_KEYS || {};
+            },
+            getRevokedLicenseIds() {
+                return revokedIds;
+            },
+            getCurrentInstallationId() {
+                return installationId;
+            },
             async sha256Hex(text) {
                 return crypto.createHash("sha256").update(text, "utf8").digest("hex");
             }
@@ -128,7 +160,8 @@ async function bootAccess(ctx, options = {}) {
         },
         setIdb(value) {
             mirrors.idb = value;
-        }
+        },
+        installationId
     };
 }
 
@@ -280,7 +313,6 @@ test("access: wrong promo does not change access", async () => {
 
 test("access: valid injected test hash grants FULL_APP", async () => {
     const ctx = loadAccessModule();
-    await bootAccess(ctx, { now: 11_000_000 });
     const testCode = "TEST-FULL-APP-CODE";
     const normalized = ctx.AccessControlPure.normalizePromoCode(testCode);
     const testHash = crypto
@@ -288,9 +320,8 @@ test("access: valid injected test hash grants FULL_APP", async () => {
         .update(normalized, "utf8")
         .digest("hex");
 
-    const result = await ctx.activatePromoCode(testCode, {
-        extraHashes: [testHash]
-    });
+    await bootAccess(ctx, { now: 11_000_000, extraHashes: [testHash] });
+    const result = await ctx.activatePromoCode(testCode);
     assert.equal(result.ok, true);
     assert.equal(ctx.getAccessSnapshot().status, "licensed");
     assert.equal(ctx.hasEntitlement("FULL_APP"), true);
@@ -303,11 +334,11 @@ test("access: valid injected test hash grants FULL_APP", async () => {
 
 test("access: raw promo is not stored", async () => {
     const ctx = loadAccessModule();
-    await bootAccess(ctx, { now: 12_000_000 });
     const raw = "FB-TEST-RAW-PROMO-VALUE";
     const normalized = ctx.AccessControlPure.normalizePromoCode(raw);
     const hash = crypto.createHash("sha256").update(normalized, "utf8").digest("hex");
-    await ctx.activatePromoCode(raw, { extraHashes: [hash] });
+    await bootAccess(ctx, { now: 12_000_000, extraHashes: [hash] });
+    await ctx.activatePromoCode(raw);
     const serialized = JSON.stringify(ctx.getAccessRecord());
     assert.equal(serialized.includes(raw), false);
     assert.equal(serialized.includes(normalized), false);
@@ -315,9 +346,9 @@ test("access: raw promo is not stored", async () => {
 
 test("access: licensed survives conceptual financial reset", async () => {
     const ctx = loadAccessModule();
-    await bootAccess(ctx, { now: 13_000_000 });
     const testHash = crypto.createHash("sha256").update("LICENSED1", "utf8").digest("hex");
-    await ctx.activatePromoCode("LICENSED1", { extraHashes: [testHash] });
+    await bootAccess(ctx, { now: 13_000_000, extraHashes: [testHash] });
+    await ctx.activatePromoCode("LICENSED1");
     assert.equal(ctx.getAccessSnapshot().isLicensed, true);
     // Financial reset does not touch access runtime.
     assert.equal(ctx.getAccessSnapshot().isLicensed, true);
@@ -468,4 +499,332 @@ test("mutation guards exist on financial entry points", () => {
             `${file} must call access write guard`
         );
     });
+});
+
+async function createEphemeralSignedLicense(overrides = {}) {
+    const subtle = crypto.webcrypto.subtle;
+    const keyPair = await subtle.generateKey(
+        { name: "ECDSA", namedCurve: "P-256" },
+        true,
+        ["sign", "verify"]
+    );
+    const publicJwk = await subtle.exportKey("jwk", keyPair.publicKey);
+    delete publicJwk.d;
+    const kid = overrides.kid || "K1";
+    const installationId = (
+        overrides.installationId || "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+    ).toLowerCase();
+    const payload = {
+        v: 1,
+        kid,
+        licenseId: overrides.licenseId || crypto.randomUUID(),
+        installationId,
+        issuedAt: overrides.issuedAt || 1_700_000_000_000,
+        expiresAt: Object.prototype.hasOwnProperty.call(overrides, "expiresAt")
+            ? overrides.expiresAt
+            : null,
+        entitlements: overrides.entitlements || ["FULL_APP"]
+    };
+    const json = JSON.stringify({
+        v: payload.v,
+        kid: payload.kid,
+        licenseId: payload.licenseId,
+        installationId: payload.installationId,
+        issuedAt: payload.issuedAt,
+        expiresAt: payload.expiresAt,
+        entitlements: payload.entitlements
+    });
+    const payloadSegment = Buffer.from(json, "utf8")
+        .toString("base64")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/g, "");
+    const signature = await subtle.sign(
+        { name: "ECDSA", hash: "SHA-256" },
+        keyPair.privateKey,
+        new TextEncoder().encode(payloadSegment)
+    );
+    const signatureSegment = Buffer.from(signature)
+        .toString("base64")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/g, "");
+    return {
+        token: `FB2.${payloadSegment}.${signatureSegment}`,
+        payload,
+        publicKeysMap: { [kid]: publicJwk },
+        privateKey: keyPair.privateKey
+    };
+}
+
+test("access: raw stored FULL_APP without proof grants no write access", async () => {
+    const ctx = loadAccessModule();
+    const start = 20_000_000;
+    const forged = {
+        ...ctx.AccessControlPure.createFreshAccessRecord(start),
+        entitlements: ["FULL_APP"],
+        activationKind: "signed-license"
+    };
+    await bootAccess(ctx, { now: start + ctx.keys.TRIAL_DURATION_MS + 5, local: forged });
+    assert.equal(ctx.hasEntitlement("FULL_APP"), false);
+    assert.equal(ctx.hasFinancialWriteAccess(), false);
+    assert.equal(ctx.getAccessSnapshot().status, "expired");
+});
+
+test("access: valid owner hash + owner activation grants FULL_APP", async () => {
+    const ctx = loadAccessModule();
+    const code = "OWNER-TEST-CODE-AAA";
+    const hash = crypto
+        .createHash("sha256")
+        .update(ctx.AccessControlPure.normalizePromoCode(code), "utf8")
+        .digest("hex");
+    await bootAccess(ctx, { now: 21_000_000, extraHashes: [hash] });
+    const result = await ctx.activatePromoCode(code);
+    assert.equal(result.ok, true);
+    assert.equal(ctx.getAccessRecord().activationKind, "owner");
+    assert.equal(ctx.hasEntitlement("FULL_APP"), true);
+    assert.equal(ctx.getAccessSnapshot().isLicensed, true);
+});
+
+test("access: fake owner activationHash grants no FULL_APP", async () => {
+    const ctx = loadAccessModule();
+    const start = 22_000_000;
+    const forged = {
+        ...ctx.AccessControlPure.createFreshAccessRecord(start),
+        activationKind: "owner",
+        activationHash: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        entitlements: ["FULL_APP"]
+    };
+    await bootAccess(ctx, {
+        now: start + ctx.keys.TRIAL_DURATION_MS + 10,
+        local: forged
+    });
+    assert.equal(ctx.hasEntitlement("FULL_APP"), false);
+    assert.equal(ctx.getAccessSnapshot().status, "expired");
+});
+
+test("access: valid signed proof grants FULL_APP", async () => {
+    const issued = await createEphemeralSignedLicense();
+    const ctx = loadAccessModule();
+    await bootAccess(ctx, {
+        now: 23_000_000,
+        publicKeysMap: issued.publicKeysMap
+    });
+    const result = await ctx.activatePromoCode(issued.token);
+    assert.equal(result.ok, true);
+    assert.equal(result.kind, "signed-license");
+    assert.equal(ctx.hasEntitlement("FULL_APP"), true);
+    assert.equal(ctx.getAccessSnapshot().status, "licensed");
+    assert.equal(ctx.getAccessRecord().licenseProofs.length, 1);
+});
+
+test("access: signed proof survives access reload", async () => {
+    const issued = await createEphemeralSignedLicense();
+    const ctx = loadAccessModule();
+    await bootAccess(ctx, {
+        now: 24_000_000,
+        publicKeysMap: issued.publicKeysMap
+    });
+    await ctx.activatePromoCode(issued.token);
+    const saved = ctx.getAccessRecord();
+
+    const ctx2 = loadAccessModule();
+    await bootAccess(ctx2, {
+        now: 24_000_100,
+        local: saved,
+        idb: saved,
+        publicKeysMap: issued.publicKeysMap
+    });
+    assert.equal(ctx2.hasEntitlement("FULL_APP"), true);
+    assert.equal(ctx2.getAccessSnapshot().isLicensed, true);
+});
+
+test("access: signed proof survives financial reset concept", async () => {
+    const issued = await createEphemeralSignedLicense();
+    const ctx = loadAccessModule();
+    await bootAccess(ctx, {
+        now: 25_000_000,
+        publicKeysMap: issued.publicKeysMap
+    });
+    await ctx.activatePromoCode(issued.token);
+    const before = JSON.stringify(ctx.getAccessRecord().licenseProofs);
+    // Financial reset must not clear access proofs.
+    assert.equal(JSON.stringify(ctx.getAccessRecord().licenseProofs), before);
+    assert.equal(ctx.hasEntitlement("FULL_APP"), true);
+});
+
+test("access: signed proof not included in financial export object shape", () => {
+    const backupSource = fs.readFileSync(
+        path.join(__dirname, "..", "backup.js"),
+        "utf8"
+    );
+    assert.equal(backupSource.includes("licenseProofs"), false);
+    assert.equal(backupSource.includes("activationHash"), false);
+    assert.equal(backupSource.includes("LICENSE_PUBLIC_KEYS"), false);
+});
+
+test("access: financial import source does not replace license fields", () => {
+    const backupSource = fs.readFileSync(
+        path.join(__dirname, "..", "backup.js"),
+        "utf8"
+    );
+    assert.ok(backupSource.includes("validateImportedBackup"));
+    assert.equal(backupSource.includes("initializeAccessControl"), false);
+    assert.equal(backupSource.includes("licenseProofs"), false);
+});
+
+test("access: duplicate license does not create duplicate proof", async () => {
+    const issued = await createEphemeralSignedLicense();
+    const ctx = loadAccessModule();
+    await bootAccess(ctx, {
+        now: 26_000_000,
+        publicKeysMap: issued.publicKeysMap
+    });
+    const first = await ctx.activatePromoCode(issued.token);
+    const second = await ctx.activatePromoCode(issued.token);
+    assert.equal(first.ok, true);
+    assert.equal(second.ok, false);
+    assert.equal(second.reason, "duplicate");
+    assert.equal(ctx.getAccessRecord().licenseProofs.length, 1);
+});
+
+test("access: clock rollback does not extend expiring signed license", async () => {
+    const start = 27_000_000;
+    const issued = await createEphemeralSignedLicense({
+        issuedAt: start,
+        expiresAt: start + dayMs(2)
+    });
+    const ctx = loadAccessModule();
+    const harness = await bootAccess(ctx, {
+        now: start,
+        publicKeysMap: issued.publicKeysMap
+    });
+    await ctx.activatePromoCode(issued.token);
+    assert.equal(ctx.hasEntitlement("FULL_APP"), true);
+
+    harness.setClock(start + dayMs(3));
+    await ctx.refreshAccessClock();
+    assert.equal(ctx.hasEntitlement("FULL_APP"), false);
+
+    harness.setClock(start + dayMs(1));
+    await ctx.refreshAccessClock();
+    assert.equal(ctx.hasEntitlement("FULL_APP"), false);
+    assert.equal(ctx.getAccessRecord().maxSeenAt >= start + dayMs(3), true);
+});
+
+test("access: v1 record migrates to v2 without resetting trial", async () => {
+    const ctx = loadAccessModule();
+    const start = 28_000_000;
+    const v1 = {
+        key: "access",
+        version: 1,
+        firstStartedAt: start,
+        maxSeenAt: start + 1000,
+        entitlements: ["FULL_APP"],
+        activationHash: null,
+        activatedAt: null,
+        activationKind: null
+    };
+    await bootAccess(ctx, { now: start + 2000, local: v1 });
+    const record = ctx.getAccessRecord();
+    assert.equal(record.version, 2);
+    assert.equal(record.firstStartedAt, start);
+    assert.ok(Array.isArray(record.licenseProofs));
+    assert.equal(ctx.getAccessSnapshot().status, "trial");
+    assert.equal(ctx.hasEntitlement("FULL_APP"), false);
+});
+
+test("access: signed FULL_APP for installation A activates on A and fails on B", async () => {
+    const installationA = "11111111-1111-4111-8111-111111111111";
+    const installationB = "22222222-2222-4222-8222-222222222222";
+    const issued = await createEphemeralSignedLicense({
+        installationId: installationA
+    });
+
+    const ctxA = loadAccessModule();
+    await bootAccess(ctxA, {
+        now: 30_000_000,
+        publicKeysMap: issued.publicKeysMap,
+        installationId: installationA
+    });
+    const okA = await ctxA.activatePromoCode(issued.token);
+    assert.equal(okA.ok, true);
+    assert.equal(ctxA.hasEntitlement("FULL_APP"), true);
+    assert.equal(ctxA.hasFinancialWriteAccess(), true);
+
+    const ctxB = loadAccessModule();
+    await bootAccess(ctxB, {
+        now: 30_000_000,
+        publicKeysMap: issued.publicKeysMap,
+        installationId: installationB
+    });
+    const failB = await ctxB.activatePromoCode(issued.token);
+    assert.equal(failB.ok, false);
+    assert.equal(failB.reason, "installation_mismatch");
+    assert.equal(ctxB.hasEntitlement("FULL_APP"), false);
+    assert.equal(ctxB.getAccessSnapshot().status, "trial");
+});
+
+test("access: foreign signed proof in storage gives no write access", async () => {
+    const installationA = "33333333-3333-4333-8333-333333333333";
+    const installationB = "44444444-4444-4444-8444-444444444444";
+    const issued = await createEphemeralSignedLicense({
+        installationId: installationA
+    });
+    const ctx = loadAccessModule();
+    const start = 31_000_000;
+    const forged = {
+        ...ctx.AccessControlPure.createFreshAccessRecord(start),
+        entitlements: ["FULL_APP"],
+        activationKind: "signed-license",
+        licenseProofs: [issued.token]
+    };
+    await bootAccess(ctx, {
+        now: start + ctx.keys.TRIAL_DURATION_MS + 1,
+        local: forged,
+        publicKeysMap: issued.publicKeysMap,
+        installationId: installationB
+    });
+    assert.equal(ctx.hasEntitlement("FULL_APP"), false);
+    assert.equal(ctx.hasFinancialWriteAccess(), false);
+});
+
+test("access: owner activation ignores installation binding", async () => {
+    const ctx = loadAccessModule();
+    const code = "OWNER-UNBOUND";
+    const hash = crypto
+        .createHash("sha256")
+        .update(ctx.AccessControlPure.normalizePromoCode(code), "utf8")
+        .digest("hex");
+    await bootAccess(ctx, {
+        now: 32_000_000,
+        extraHashes: [hash],
+        installationId: "55555555-5555-4555-8555-555555555555"
+    });
+    const result = await ctx.activatePromoCode(code);
+    assert.equal(result.ok, true);
+    assert.equal(ctx.hasEntitlement("FULL_APP"), true);
+});
+
+test("access: mismatch cannot be bypassed by stored FULL_APP entitlement", async () => {
+    const installationA = "66666666-6666-4666-8666-666666666666";
+    const installationB = "77777777-7777-4777-8777-777777777777";
+    const issued = await createEphemeralSignedLicense({
+        installationId: installationA
+    });
+    const ctx = loadAccessModule();
+    const start = 33_000_000;
+    await bootAccess(ctx, {
+        now: start,
+        publicKeysMap: issued.publicKeysMap,
+        installationId: installationB,
+        local: {
+            ...ctx.AccessControlPure.createFreshAccessRecord(start),
+            entitlements: ["FULL_APP"],
+            activationKind: "signed-license",
+            licenseProofs: [issued.token]
+        }
+    });
+    assert.equal(ctx.hasEntitlement("FULL_APP"), false);
+    assert.equal(ctx.getAccessSnapshot().isLicensed, false);
 });

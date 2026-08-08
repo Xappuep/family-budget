@@ -420,7 +420,7 @@ Voice habits: localStorage.
 * без обязательной регистрации;
 * без облачной БД.
 
-### Этап 8.1. Trial / Access Control / Promo / Legal — IN PROGRESS
+### Этап 8.1. Trial / Licensing / Promo / Legal — DONE
 
 Цель Version 8.1:
 
@@ -431,10 +431,47 @@ Voice habits: localStorage.
 * export с предупреждением о незашифрованном JSON;
 * reset финансовых данных не сбрасывает trial/license.
 
-Известные ограничения local-only архитектуры:
+Пользовательская проверка на физическом Android успешно подтвердила:
 
-* полная очистка site data браузера может начать новый trial;
-* клиентский код можно обойти вручную — это soft licensing;
+* PWA успешно обновлена до версии 8.1;
+* RELEASE `20260809-1` работает корректно;
+* старые IndexedDB финансовые данные сохранились;
+* trial отображается корректно;
+* новый финансовый write в trial работает;
+* данные сохраняются после закрытия и повторного запуска;
+* financial reset НЕ запускает trial заново;
+* access metadata сохраняется отдельно от financial state;
+* export/import продолжают работать;
+* правовая информация доступна и корректно отображается;
+* light/dark темы работают;
+* promo/activation UI работает;
+* owner FULL_APP activation успешно подтверждена;
+* после financial reset и повторного запуска лицензия сохранилась;
+* активированный доступ не возвращается в trial.
+
+Автоматические тесты перед публикацией: 95 pass / 0 fail.
+
+#### Архитектура Version 8.1
+
+* Financial storage: IndexedDB / `familyBudgetDB`
+* Financial schemaVersion: `2`
+* Access metadata: IndexedDB `meta/access` + localStorage `familyBudgetAccess_v1`
+* Trial: 7 × 24 часа
+* Access modes: `trial` / `licensed` / `expired`
+* Owner installation: `FULL_APP` entitlement
+* Promo: local SHA-256 validation
+* Raw owner code: НЕ хранится в GitHub
+* Legal information: v1 / 09.08.2026
+* Application version: `8.1`
+* PWA release: `20260809-1`
+
+#### Известные ограничения
+
+* полная ручная очистка всех site data может сбросить local-only trial;
+* client-side access control можно обойти модификацией JavaScript;
+* это soft licensing, а не DRM;
+* более строгая коммерческая лицензия потребует отдельного решения;
+* backend без согласования владельца не добавлять;
 * будущие theme packs через entitlements пока не реализуются (только CSS-переменные позже, без theme store сейчас).
 
 Не входит:
@@ -527,4 +564,4 @@ Voice habits: localStorage.
 | 2026-08-08 | Этап 6.1 | Локальный словарь голосовых привычек; UX: learning prompt рядом с Category | Пользовательская проверка на Android успешно завершена |
 | 2026-08-08 | Этап 7 | PWA: manifest, icons, SW, install UX, offline shell, controlled update | Пользовательская проверка на Android успешно завершена |
 | 2026-08-08 | Этап 8 | IndexedDB primary persistence + auto migration from legacy localStorage; race fix pending save vs reset | Пользовательская проверка на Android успешно завершена. `npm test` — 73/73. Этап 9 не выполнялся |
-| 2026-08-09 | Этап 8.1 | Trial / access control / promo / legal: write guards, More+desktop access UI, export warning, reset preserves license | IN PROGRESS — Этап 9 не выполняется |
+| 2026-08-09 | Этап 8.1 | Trial / access control / promo / legal: write guards, More+desktop access UI, export warning, reset preserves license | Пользовательская проверка на Android успешно завершена. `npm test` — 95/95. Этап 9 не выполнялся |

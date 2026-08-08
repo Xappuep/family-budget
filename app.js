@@ -88,6 +88,20 @@
             );
         }
 
+        if (elements.cancelMobileAccountForm) {
+            elements.cancelMobileAccountForm.addEventListener(
+                "click",
+                cancelMobileAccountForm
+            );
+        }
+
+        if (elements.cancelMobileTransferForm) {
+            elements.cancelMobileTransferForm.addEventListener(
+                "click",
+                cancelMobileTransferForm
+            );
+        }
+
         if (elements.openMobileGoalForm) {
             elements.openMobileGoalForm.addEventListener(
                 "click",
@@ -275,16 +289,35 @@
                 return;
             }
 
-            if (action === "toggle-goal-details") {
+            if (action === "toggle-goal-details" || action === "collapse-goal-details") {
                 const card = button.closest(".goal-card");
 
                 if (!card) {
                     return;
                 }
 
-                const willExpand = !card.classList.contains("is-expanded");
+                const willExpand =
+                    action === "collapse-goal-details"
+                        ? false
+                        : !card.classList.contains("is-expanded");
+
                 card.classList.toggle("is-expanded", willExpand);
-                button.textContent = willExpand ? "Свернуть" : "Подробнее";
+
+                card
+                    .querySelectorAll("[data-action='toggle-goal-details']")
+                    .forEach((toggleButton) => {
+                        toggleButton.textContent = willExpand
+                            ? "Свернуть"
+                            : "Подробнее";
+                    });
+
+                if (!willExpand) {
+                    card.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start"
+                    });
+                }
+
                 return;
             }
 

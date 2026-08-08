@@ -22,9 +22,15 @@
             }
 
             if (!Number.isFinite(amount) || amount <= 0) {
+                const goal = getGoalById(goalId);
+                const isCredit =
+                    goal && getGoalType(goal) === GOAL_TYPE.CREDIT;
+
                 showFormMessage(
                     elements.contributionMessage,
-                    "Сумма вклада должна быть больше нуля.",
+                    isCredit
+                        ? "Сумма платежа должна быть больше нуля."
+                        : "Сумма вклада должна быть больше нуля.",
                     "error"
                 );
                 return;
@@ -50,6 +56,10 @@
                 comment: elements.contributionComment.value.trim()
             };
 
+            const goal = getGoalById(goalId);
+            const isCredit =
+                goal && getGoalType(goal) === GOAL_TYPE.CREDIT;
+
             if (editingId) {
                 const index = state.contributions.findIndex(
                     (contribution) => contribution.id === editingId
@@ -62,7 +72,7 @@
                     };
                 }
 
-                showToast("Вклад обновлён.");
+                showToast(isCredit ? "Платёж обновлён." : "Вклад обновлён.");
             } else {
                 state.contributions.push({
                     id: createId(),
@@ -70,7 +80,7 @@
                     ...contributionData
                 });
 
-                showToast("Вклад добавлен.");
+                showToast(isCredit ? "Платёж добавлен." : "Вклад добавлен.");
             }
 
             resetContributionForm();
@@ -117,9 +127,12 @@
             }
 
             const goal = getGoalById(contribution.goalId);
+            const isCredit =
+                goal && getGoalType(goal) === GOAL_TYPE.CREDIT;
+            const recordLabel = isCredit ? "платёж" : "вклад";
 
             const confirmed = window.confirm(
-                `Удалить вклад ${formatMoney(contribution.amount)}` +
+                `Удалить ${recordLabel} ${formatMoney(contribution.amount)}` +
                 `${goal ? ` в цель «${goal.name}»` : ""}?`
             );
 
@@ -135,7 +148,7 @@
                 resetContributionForm();
             }
 
-            showToast("Вклад удалён.");
+            showToast(isCredit ? "Платёж удалён." : "Вклад удалён.");
             commitChanges();
         }
 
@@ -242,24 +255,29 @@
 
             if (state.contributions.length === 0) {
                 return {
-                    title: "Вкладов пока нет.",
-                    text: "Сначала создайте финансовую цель, затем добавьте вклад."
+                    title: "Вкладов и платежей пока нет.",
+                    text: "Сначала создайте финансовую цель, затем добавьте вклад или платёж."
                 };
             }
 
             return {
-                title: "По заданным фильтрам вкладов нет.",
+                title: "По заданным фильтрам ничего не найдено.",
                 text: "Измените поиск или сбросьте фильтры."
             };
         }
 
         function buildMobileContributionCard(contribution) {
             const goal = getGoalById(contribution.goalId);
+            const isCredit =
+                goal && getGoalType(goal) === GOAL_TYPE.CREDIT;
             const accountName =
                 getAccountById(contribution.accountId)?.name || "";
             const source = String(contribution.source || "").trim();
             const comment = String(contribution.comment || "").trim();
             const metaParts = [accountName, source].filter(Boolean);
+            const actionLabel = isCredit
+                ? "Действия с платежом"
+                : "Действия со вкладом";
 
             const card = document.createElement("article");
             card.className = "mobile-tx-card";
@@ -291,7 +309,7 @@
                                 class="mobile-action-menu__toggle mobile-tx-card__menu-toggle"
                                 type="button"
                                 data-action="toggle-mobile-menu"
-                                aria-label="Действия со вкладом"
+                                aria-label="${escapeHTML(actionLabel)}"
                                 aria-haspopup="true"
                                 aria-expanded="false"
                             >

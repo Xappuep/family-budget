@@ -71,6 +71,20 @@ function updateMobileTransferButtonState() {
     elements.openMobileTransferForm.disabled = state.accounts.length < 2;
 }
 
+function cancelMobileAccountForm() {
+    elements.accountForm.reset();
+    elements.accountOpeningBalance.value = "0";
+    showFormMessage(elements.accountMessage, "");
+    closeMobileAccountForm();
+}
+
+function cancelMobileTransferForm() {
+    elements.transferForm.reset();
+    elements.transferDate.value = getToday();
+    showFormMessage(elements.transferMessage, "");
+    closeMobileTransferForm();
+}
+
 function openMobileAccountForm() {
     elements.accountForm.reset();
     elements.accountOpeningBalance.value = "0";

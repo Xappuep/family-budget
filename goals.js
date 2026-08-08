@@ -51,6 +51,7 @@ const goalAmountSnapshot = new Map();
                 elements.goalAnnualRate.value !== "" &&
                 (!Number.isFinite(annualRate) || annualRate < 0 || annualRate > 100)
             ) {
+                revealGoalFormExtra();
                 showFormMessage(
                     elements.goalMessage,
                     "Годовая ставка должна быть от 0 до 100%.",
@@ -60,16 +61,19 @@ const goalAmountSnapshot = new Map();
             }
 
             if (!openedAt) {
+                revealGoalFormExtra();
                 showFormMessage(elements.goalMessage, isDeposit ? "Укажите дату открытия вклада." : "Укажите дату выдачи кредита.", "error");
                 return;
             }
 
             if (openedAt > getToday()) {
+                revealGoalFormExtra();
                 showFormMessage(elements.goalMessage, isDeposit ? "Дата открытия не может быть в будущем." : "Дата выдачи не может быть в будущем.", "error");
                 return;
             }
 
             if (isDeposit && (!balanceAsOf || balanceAsOf < openedAt || balanceAsOf > getToday())) {
+                revealGoalFormExtra();
                 showFormMessage(
                     elements.goalMessage,
                     "Дата актуальности суммы должна быть между датой открытия и сегодняшним днем.",
@@ -79,6 +83,7 @@ const goalAmountSnapshot = new Map();
             }
 
             if (isDeposit && elements.goalDeadline.value && balanceAsOf > elements.goalDeadline.value) {
+                revealGoalFormExtra();
                 showFormMessage(
                     elements.goalMessage,
                     "Дата актуальности суммы не может быть позже окончания вклада.",
@@ -88,6 +93,7 @@ const goalAmountSnapshot = new Map();
             }
 
             if (elements.goalDeadline.value && openedAt > elements.goalDeadline.value) {
+                revealGoalFormExtra();
                 showFormMessage(elements.goalMessage, isDeposit ? "Дата открытия должна быть раньше срока вклада." : "Дата выдачи должна быть раньше даты закрытия.", "error");
                 return;
             }
@@ -137,6 +143,19 @@ const goalAmountSnapshot = new Map();
         }
 
         /**
+         * На mobile раскрывает блок «Дополнительно», если ошибка в скрытых полях.
+         */
+        function revealGoalFormExtra() {
+            if (
+                elements.goalFormExtra &&
+                typeof window.matchMedia === "function" &&
+                window.matchMedia("(max-width: 620px)").matches
+            ) {
+                elements.goalFormExtra.open = true;
+            }
+        }
+
+        /**
          * Меняет подписи формы и показывает поле доходности только для вкладов.
          */
         function updateGoalFormByType() {
@@ -146,7 +165,9 @@ const goalAmountSnapshot = new Map();
             elements.goalOpenedAtField.classList.remove("hidden");
             elements.goalCapitalizationField.classList.toggle("hidden", !isDeposit);
             elements.goalBalanceAsOfField.classList.toggle("hidden", !isDeposit);
-            elements.goalBalanceAsOf.required = isDeposit;
+            // Не ставим HTML required: на mobile поле в «Дополнительно»,
+            // а default и JS-валидация уже обеспечивают корректный UX.
+            elements.goalBalanceAsOf.required = false;
             elements.goalAnnualRateField.querySelector("label").textContent = isDeposit
                 ? "Годовой доход, %"
                 : "Годовая ставка, %";
@@ -203,7 +224,12 @@ const goalAmountSnapshot = new Map();
                     : "Редактировать кредит";
 
             elements.cancelGoalEdit.classList.remove("hidden");
+            elements.cancelGoalEdit.textContent = "Отменить редактирование";
             showFormMessage(elements.goalMessage, "");
+
+            if (elements.goalFormExtra) {
+                elements.goalFormExtra.open = false;
+            }
 
             elements.goalForm.classList.add("is-mobile-open");
             elements.goalForm.scrollIntoView({
@@ -268,7 +294,13 @@ const goalAmountSnapshot = new Map();
             elements.goalCapitalization.value = "monthly";
             elements.goalFormTitle.textContent = "Добавить финансовую цель";
             elements.cancelGoalEdit.classList.add("hidden");
+            elements.cancelGoalEdit.textContent = "Отменить редактирование";
             elements.goalForm.classList.remove("is-mobile-open");
+
+            if (elements.goalFormExtra) {
+                elements.goalFormExtra.open = false;
+            }
+
             updateGoalFormByType();
             showFormMessage(elements.goalMessage, "");
         }
@@ -276,6 +308,17 @@ const goalAmountSnapshot = new Map();
         function openMobileGoalForm() {
             resetGoalForm();
             elements.goalForm.classList.add("is-mobile-open");
+            elements.cancelGoalEdit.classList.remove("hidden");
+            elements.cancelGoalEdit.textContent = "Отмена";
+
+            if (!elements.goalOpenedAt.value) {
+                elements.goalOpenedAt.value = getToday();
+            }
+
+            if (!elements.goalBalanceAsOf.value) {
+                elements.goalBalanceAsOf.value = getToday();
+            }
+
             elements.goalForm.scrollIntoView({
                 behavior: "smooth",
                 block: "center"
@@ -534,6 +577,14 @@ const goalAmountSnapshot = new Map();
                     <div class="goal-card__comment">
                         ${escapeHTML(goal.comment || "Комментарий не добавлен.")}
                     </div>
+
+                    <button
+                        class="button button--secondary button--small mobile-only goal-card__collapse"
+                        type="button"
+                        data-action="collapse-goal-details"
+                    >
+                        Свернуть
+                    </button>
                 </div>
 
                 <div class="goal-card__actions">

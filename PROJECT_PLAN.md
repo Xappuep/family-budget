@@ -271,7 +271,7 @@ Desktop-таблицу сохранить для больших экранов.
 
 Создание и редактирование открываются только по запросу пользователя.
 
-Реализация Mobile Goals & Accounts завершена, ожидает пользовательской проверки.
+Основная реализация завершена. Выполнена UX-корректировка временных форм, mobile goal form и expanded details. Ожидает финальной пользовательской проверки.
 
 ### Этап 6. Voice Input v1 — PLANNED
 
@@ -439,4 +439,4 @@ localStorage → IndexedDB.
 | 2026-08-08 | Этап 2 | Mobile Dashboard + единая сортировка операций (`date` → `createdAt` → индекс) для Dashboard и вкладки «Операции»; helper в `calculations.js` | Syntax/автотесты OK. Пользовательская проверка успешно завершена (newest-first, 100→200→300, reload, приоритет даты). Этап 3 не выполнялся на момент закрытия Этапа 2 |
 | 2026-08-08 | Этап 3 | Quick Add bottom sheet для кнопки «+»: расход/доход, сумма, категория, счёт; дата/член семьи/комментарий в «Дополнительно»; общий helper создания операции (`validateTransactionFields` / `addTransaction`); выбор счёта по `createdAt` | Пользовательская проверка успешно завершена. Этап 4 не выполнялся на момент закрытия Этапа 3 |
 | 2026-08-08 | Этап 4 | Mobile Transaction Feed: мобильная лента операций с группировкой по дате; desktop-таблица сохранена; форма добавления скрыта на mobile вне редактирования; корректировка touch targets `⋯` и порядка Desktop UI (форма → фильтры → таблица) | `npm test` — 24/24; `node --check` transactions/ui/app/calculations/dates/formatting — OK. Пользовательская проверка успешно завершена |
-| 2026-08-08 | Этап 5 | Mobile Goals & Accounts: компактные карточки целей, мобильные ленты вкладов/переводов, скрытие форм до запроса, общие mobile action menus, generic newest-first sort | `npm test` — 26/26; `node --check` calculations/contributions/accounts/goals/ui/app/transactions — OK. Ожидает пользовательской проверки. Этап 6 не выполнялся |
+| 2026-08-08 | Этап 5 | Mobile Goals & Accounts: компактные карточки целей, мобильные ленты вкладов/переводов, скрытие форм до запроса; UX: закрытие transient forms при смене вкладки, Отмена, «Дополнительно» в goalForm, нижнее «Свернуть» | `npm test` — 26/26; `node --check` goals/contributions/accounts/app/ui/calculations — OK. Ожидает финальной пользовательской проверки. Этап 6 не выполнялся |

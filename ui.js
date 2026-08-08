@@ -87,6 +87,8 @@
             accountsGrid: document.getElementById("accountsGrid"),
             openMobileAccountForm: document.getElementById("openMobileAccountForm"),
             openMobileTransferForm: document.getElementById("openMobileTransferForm"),
+            cancelMobileAccountForm: document.getElementById("cancelMobileAccountForm"),
+            cancelMobileTransferForm: document.getElementById("cancelMobileTransferForm"),
             transferForm: document.getElementById("transferForm"),
             transferDate: document.getElementById("transferDate"),
             transferFrom: document.getElementById("transferFrom"),
@@ -149,6 +151,7 @@
             goalMessage: document.getElementById("goalMessage"),
             cancelGoalEdit: document.getElementById("cancelGoalEdit"),
             openMobileGoalForm: document.getElementById("openMobileGoalForm"),
+            goalFormExtra: document.getElementById("goalFormExtra"),
             depositsGrid: document.getElementById("depositsGrid"),
             creditsGrid: document.getElementById("creditsGrid"),
             depositsEmptyState: document.getElementById("depositsEmptyState"),
@@ -266,6 +269,10 @@
             const nextTab = MOBILE_TAB_IDS.includes(tab) ? tab : "home";
             const { scrollToTop = true } = options;
 
+            if (typeof closeMobileTransientForms === "function") {
+                closeMobileTransientForms();
+            }
+
             activeMobileTab = nextTab;
             document.body.dataset.mobileTab = nextTab;
             updateMobileNavActiveState(nextTab);
@@ -273,6 +280,58 @@
             if (scrollToTop) {
                 window.scrollTo({ top: 0, behavior: "smooth" });
             }
+        }
+
+        /**
+         * Закрывает временные mobile-формы при смене вкладки.
+         * Не меняет финансовый state — только UI.
+         */
+        function closeMobileTransientForms() {
+            if (typeof resetGoalForm === "function") {
+                resetGoalForm();
+            }
+
+            if (typeof resetContributionForm === "function") {
+                resetContributionForm();
+            }
+
+            if (elements.accountForm) {
+                elements.accountForm.reset();
+
+                if (elements.accountOpeningBalance) {
+                    elements.accountOpeningBalance.value = "0";
+                }
+
+                if (elements.accountMessage) {
+                    showFormMessage(elements.accountMessage, "");
+                }
+            }
+
+            if (typeof closeMobileAccountForm === "function") {
+                closeMobileAccountForm();
+            }
+
+            if (elements.transferForm) {
+                elements.transferForm.reset();
+
+                if (elements.transferDate && typeof getToday === "function") {
+                    elements.transferDate.value = getToday();
+                }
+
+                if (elements.transferMessage) {
+                    showFormMessage(elements.transferMessage, "");
+                }
+            }
+
+            if (typeof closeMobileTransferForm === "function") {
+                closeMobileTransferForm();
+            }
+
+            if (elements.goalFormExtra) {
+                elements.goalFormExtra.open = false;
+            }
+
+            closeMobileActionMenus();
         }
 
         /**

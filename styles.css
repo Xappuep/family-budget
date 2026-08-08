@@ -1655,7 +1655,8 @@
         }
 
         .quick-add-voice__habit-prompt {
-            margin-top: 4px;
+            margin-top: 10px;
+            max-width: 100%;
         }
 
         .quick-add-voice__habit-card {
@@ -1678,11 +1679,23 @@
             overflow-wrap: anywhere;
         }
 
+        .quick-add-voice__habit-action {
+            width: 100%;
+            min-height: 44px;
+            justify-content: center;
+        }
+
         .quick-add-voice__habit-pending {
             margin: 0;
-            color: var(--text-muted);
+            padding: 10px 12px;
+            border: 1px solid color-mix(in srgb, var(--orange) 35%, var(--border));
+            border-radius: 12px;
+            color: var(--text);
+            background: color-mix(in srgb, var(--orange) 8%, var(--card));
             font-size: 0.82rem;
             font-weight: 600;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
         }
 
         .voice-habits__intro {

@@ -196,6 +196,13 @@
             );
         }
 
+        if (elements.quickAddVoiceHabitPrompt) {
+            elements.quickAddVoiceHabitPrompt.addEventListener(
+                "click",
+                handleVoiceHabitPromptClick
+            );
+        }
+
         if (elements.voiceHabitsList) {
             elements.voiceHabitsList.addEventListener(
                 "click",

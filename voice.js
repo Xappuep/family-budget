@@ -291,10 +291,6 @@ function renderVoicePreview(parsed) {
                       .join("")}</ul>`
                 : ""
         }
-        <div
-            class="quick-add-voice__habit-prompt hidden"
-            id="quickAddVoiceHabitPrompt"
-        ></div>
         <p class="quick-add-voice__privacy">Операция сохранится только после вашего подтверждения.</p>
         <button
             class="button button--secondary quick-add-voice__again"
@@ -304,10 +300,6 @@ function renderVoicePreview(parsed) {
             🎙 Сказать ещё раз
         </button>
     `;
-
-    elements.quickAddVoiceHabitPrompt = document.getElementById(
-        "quickAddVoiceHabitPrompt"
-    );
 
     if (typeof updateQuickAddSubmitLabel === "function") {
         updateQuickAddSubmitLabel();
@@ -377,6 +369,28 @@ function buildVoiceParserContext() {
     };
 }
 
+function ensureVoiceHabitPromptVisible(prompt) {
+    if (!prompt || prompt.classList.contains("hidden")) {
+        return;
+    }
+
+    const rect = prompt.getBoundingClientRect();
+    const viewportHeight =
+        window.visualViewport?.height || window.innerHeight || 0;
+    const viewportOffsetTop = window.visualViewport?.offsetTop || 0;
+    const visibleTop = viewportOffsetTop;
+    const visibleBottom = viewportOffsetTop + viewportHeight;
+    const isFullyVisible =
+        rect.top >= visibleTop + 8 && rect.bottom <= visibleBottom - 8;
+
+    if (!isFullyVisible && typeof prompt.scrollIntoView === "function") {
+        prompt.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest"
+        });
+    }
+}
+
 function showVoiceHabitPrompt(options) {
     const prompt = elements.quickAddVoiceHabitPrompt;
 
@@ -401,7 +415,7 @@ function showVoiceHabitPrompt(options) {
                 }
             </p>
             <button
-                class="button button--primary button--small"
+                class="button button--primary quick-add-voice__habit-action"
                 type="button"
                 data-voice-habit-action="${isUpdate ? "update" : "remember"}"
             >
@@ -409,6 +423,10 @@ function showVoiceHabitPrompt(options) {
             </button>
         </div>
     `;
+
+    window.requestAnimationFrame(() => {
+        ensureVoiceHabitPromptVisible(prompt);
+    });
 }
 
 function evaluateVoiceHabitPrompt() {
@@ -506,10 +524,13 @@ function acceptPendingVoiceHabitFromPrompt(mode) {
     if (elements.quickAddVoiceHabitPrompt) {
         elements.quickAddVoiceHabitPrompt.innerHTML = `
             <p class="quick-add-voice__habit-pending">
-                Правило будет сохранено после подтверждения операции.
+                ✓ Правило будет сохранено после подтверждения операции.
             </p>
         `;
         elements.quickAddVoiceHabitPrompt.classList.remove("hidden");
+        window.requestAnimationFrame(() => {
+            ensureVoiceHabitPromptVisible(elements.quickAddVoiceHabitPrompt);
+        });
     }
 }
 
@@ -733,14 +754,6 @@ function handleHomeVoiceButtonClick(event) {
 }
 
 function handleQuickAddVoicePreviewClick(event) {
-    if (
-        event.target.closest("[data-voice-habit-action]") &&
-        elements.quickAddVoicePreview?.contains(event.target)
-    ) {
-        handleVoiceHabitPromptClick(event);
-        return;
-    }
-
     const again = event.target.closest("#quickAddVoiceAgain, .quick-add-voice__again");
 
     if (!again || !elements.quickAddVoicePreview?.contains(again)) {

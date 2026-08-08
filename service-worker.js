@@ -3,7 +3,7 @@
    Scope: ./ (только каталог приложения на GitHub Pages)
    ========================================================= */
 
-const RELEASE = "20260808-8";
+const RELEASE = "20260808-9";
 const CACHE_PREFIX = "family-budget-";
 const CACHE_NAME = `${CACHE_PREFIX}shell-${RELEASE}`;
 

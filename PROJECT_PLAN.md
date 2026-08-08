@@ -356,7 +356,7 @@ AI API на данном этапе не использовать.
 
 Сначала проверить реальную эксплуатацию PWA.
 
-PWA shell, manifest, icons, service worker, install UX, basic offline и controlled update flow реализованы. Ожидает пользовательской проверки установки, standalone, offline и обновления на физическом Android.
+PWA shell, manifest, icons, service worker, install UX, basic offline и controlled update flow реализованы. Физическая проверка Android успешно подтвердила install, standalone, offline и localStorage. Подготовлен контрольный релиз для проверки user-confirmed PWA update flow.
 
 ### Этап 8. IndexedDB — PLANNED
 

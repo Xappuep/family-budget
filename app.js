@@ -501,6 +501,10 @@
                 initVoiceInput();
             }
 
+            if (typeof initPwa === "function") {
+                initPwa();
+            }
+
             renderAll();
         }
 

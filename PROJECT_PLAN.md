@@ -322,7 +322,7 @@ AI API на данном этапе не использовать.
 
 Пользовательская проверка успешно завершена на физическом Android: SpeechRecognition, parser, preview, confirm-only save, Home Voice CTA, Quick Add без autofocus, category disclosure, menu clamp.
 
-### Этап 6.1. Локальный словарь привычек — IN PROGRESS
+### Этап 6.1. Локальный словарь привычек — DONE
 
 Позволить системе запоминать типичные соответствия.
 
@@ -337,9 +337,9 @@ AI API на данном этапе не использовать.
 
 В дальнейшем возможно автоматическое обучение словаря на исправлениях пользователя.
 
-Реализация локального словаря голосовых привычек завершена. Логика локальных привычек успешно проверена на физическом Android. Выполнена финальная UX-корректировка расположения learning prompt рядом с Category.
+Пользовательская проверка успешно завершена на физическом Android: локальные голосовые привычки, prompt рядом с Category, create/update/cancel, управление словарём.
 
-### Этап 7. PWA — PLANNED
+### Этап 7. PWA — IN PROGRESS
 
 Превратить веб-приложение в устанавливаемое Progressive Web App.
 
@@ -355,6 +355,8 @@ AI API на данном этапе не использовать.
 Не переписывать приложение на React Native только ради установки на телефон.
 
 Сначала проверить реальную эксплуатацию PWA.
+
+PWA shell, manifest, icons, service worker, install UX, basic offline и controlled update flow реализованы. Ожидает пользовательской проверки установки, standalone, offline и обновления на физическом Android.
 
 ### Этап 8. IndexedDB — PLANNED
 
@@ -453,4 +455,5 @@ localStorage → IndexedDB.
 | 2026-08-08 | Этап 4 | Mobile Transaction Feed: мобильная лента операций с группировкой по дате; desktop-таблица сохранена; форма добавления скрыта на mobile вне редактирования; корректировка touch targets `⋯` и порядка Desktop UI (форма → фильтры → таблица) | `npm test` — 24/24; `node --check` transactions/ui/app/calculations/dates/formatting — OK. Пользовательская проверка успешно завершена |
 | 2026-08-08 | Этап 5 | Mobile Goals & Accounts + UX; menu stacking; Quick Add category chips; cache-busting | Пользовательская проверка успешно завершена. Этап 6 разрешён |
 | 2026-08-08 | Этап 6 | Voice Input v1 | Пользовательская проверка на Android успешно завершена |
-| 2026-08-08 | Этап 6.1 | Локальный словарь голосовых привычек; UX: learning prompt рядом с Category | Логика на Android OK; финальная UX-корректировка prompt. Этап 7 не выполнялся |
+| 2026-08-08 | Этап 6.1 | Локальный словарь голосовых привычек; UX: learning prompt рядом с Category | Пользовательская проверка на Android успешно завершена |
+| 2026-08-08 | Этап 7 | PWA: manifest, icons, SW, install UX, offline shell, controlled update | Ожидает проверки на физическом Android / GitHub Pages. Этап 8 не выполнялся |

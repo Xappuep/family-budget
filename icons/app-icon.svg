@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="!5<59=K9 1N465B">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d1421"/>
+      <stop offset="100%" stop-color="#080d16"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff8a24"/>
+      <stop offset="100%" stop-color="#2887ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="168" fill="none" stroke="url(#ring)" stroke-width="28"/>
+  <circle cx="256" cy="256" r="118" fill="none" stroke="#26364d" stroke-width="10"/>
+  <!-- Compass needle: orange N, blue S -->
+  <path d="M256 118 L292 256 L256 236 Z" fill="#ff8a24"/>
+  <path d="M256 394 L220 256 L256 276 Z" fill="#2887ff"/>
+  <path d="M256 118 L220 256 L256 236 Z" fill="#ff9f4d"/>
+  <path d="M256 394 L292 256 L256 276 Z" fill="#4a9bff"/>
+  <circle cx="256" cy="256" r="22" fill="#f4f7fb"/>
+  <circle cx="256" cy="256" r="10" fill="#080d16"/>
+  <!-- Cardinal ticks -->
+  <rect x="246" y="78" width="20" height="28" rx="4" fill="#ff8a24"/>
+  <rect x="246" y="406" width="20" height="28" rx="4" fill="#2887ff"/>
+  <rect x="78" y="246" width="28" height="20" rx="4" fill="#96a6bb"/>
+  <rect x="406" y="246" width="28" height="20" rx="4" fill="#96a6bb"/>
+</svg>

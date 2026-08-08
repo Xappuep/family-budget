@@ -8,6 +8,14 @@
 
     <title>Семейный бюджет</title>
 
+    <link rel="manifest" href="./manifest.webmanifest">
+    <meta id="themeColorMeta" name="theme-color" content="#080d16">
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="./icons/app-icon.svg">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Бюджет">
+
     <!--
         Ранняя установка темы до отрисовки страницы.
         Так пользователь не видит «мигание» при загрузке сохранённой темы.
@@ -21,6 +29,14 @@
                         : "dark";
         
                     document.documentElement.setAttribute("data-theme", theme);
+
+                    const themeMeta = document.getElementById("themeColorMeta");
+                    if (themeMeta) {
+                        themeMeta.setAttribute(
+                            "content",
+                            theme === "light" ? "#eef3f9" : "#080d16"
+                        );
+                    }
                 })();
     </script>
     <!--
@@ -28,8 +44,9 @@
         При изменении frontend CSS/JS перед публикацией (GitHub Pages и т.п.)
         обновлять ОДНО и то же значение версии у всех локальных assets ниже.
         Не использовать случайное значение на каждый запрос.
+        Должна совпадать с RELEASE / CACHE_NAME в service-worker.js.
     -->
-    <link rel="stylesheet" href="styles.css?v=20260808-7">
+    <link rel="stylesheet" href="styles.css?v=20260808-8">
 </head>
 
 <body data-mobile-tab="home">
@@ -919,6 +936,32 @@
 
             <div style="height: 16px;"></div>
 
+            <div class="card form-card mobile-tools-card" id="pwaInstallCard">
+                <h3>Приложение</h3>
+                <p
+                    class="pwa-install__status hidden"
+                    id="pwaInstallStatus"
+                >
+                    ✓ Приложение установлено
+                </p>
+                <div class="mobile-tools__actions">
+                    <button
+                        class="button button--primary hidden"
+                        id="pwaInstallButton"
+                        type="button"
+                    >
+                        Установить приложение
+                    </button>
+                </div>
+                <p class="pwa-install__hint hidden" id="pwaInstallHint">
+                    Если ваш браузер поддерживает установку веб-приложений,
+                    используйте функцию установки или добавления на главный
+                    экран в меню браузера.
+                </p>
+            </div>
+
+            <div style="height: 16px;"></div>
+
             <div class="card form-card mobile-tools-card">
                 <h3>Оформление</h3>
                 <div class="mobile-tools__actions">
@@ -1288,26 +1331,28 @@
         <span class="theme-toggle__label" id="themeToggleLabel">Светлая</span>
     </button>
     <!--
-        Локальные скрипты: та же asset version, что у styles.css (?v=20260808-7).
+        Локальные скрипты: та же asset version, что у styles.css (?v=20260808-8).
         Перед публикацией обновлять версию у всех CSS/JS синхронно.
+        RELEASE в service-worker.js должен совпадать.
     -->
-    <script src="constants.js?v=20260808-7"></script>
-    <script src="state.js?v=20260808-7"></script>
-    <script src="money.js?v=20260808-7"></script>
-    <script src="dates.js?v=20260808-7"></script>
-    <script src="formatting.js?v=20260808-7"></script>
-    <script src="ui.js?v=20260808-7"></script>
-    <script src="calculations.js?v=20260808-7"></script>
-    <script src="storage.js?v=20260808-7"></script>
-    <script src="accounts.js?v=20260808-7"></script>
-    <script src="transactions.js?v=20260808-7"></script>
-    <script src="voice-parser.js?v=20260808-7"></script>
-    <script src="voice-habits.js?v=20260808-7"></script>
-    <script src="voice.js?v=20260808-7"></script>
-    <script src="goals.js?v=20260808-7"></script>
-    <script src="contributions.js?v=20260808-7"></script>
-    <script src="analytics.js?v=20260808-7"></script>
-    <script src="backup.js?v=20260808-7"></script>
-    <script src="app.js?v=20260808-7"></script>
+    <script src="constants.js?v=20260808-8"></script>
+    <script src="state.js?v=20260808-8"></script>
+    <script src="money.js?v=20260808-8"></script>
+    <script src="dates.js?v=20260808-8"></script>
+    <script src="formatting.js?v=20260808-8"></script>
+    <script src="ui.js?v=20260808-8"></script>
+    <script src="calculations.js?v=20260808-8"></script>
+    <script src="storage.js?v=20260808-8"></script>
+    <script src="accounts.js?v=20260808-8"></script>
+    <script src="transactions.js?v=20260808-8"></script>
+    <script src="voice-parser.js?v=20260808-8"></script>
+    <script src="voice-habits.js?v=20260808-8"></script>
+    <script src="voice.js?v=20260808-8"></script>
+    <script src="goals.js?v=20260808-8"></script>
+    <script src="contributions.js?v=20260808-8"></script>
+    <script src="analytics.js?v=20260808-8"></script>
+    <script src="backup.js?v=20260808-8"></script>
+    <script src="pwa.js?v=20260808-8"></script>
+    <script src="app.js?v=20260808-8"></script>
 </body>
 </html>

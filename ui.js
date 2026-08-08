@@ -618,6 +618,10 @@
             document.documentElement.setAttribute("data-theme", nextTheme);
             localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
             updateThemeToggleButton();
+
+            if (typeof syncPwaThemeColor === "function") {
+                syncPwaThemeColor(nextTheme);
+            }
         }
 
         /**

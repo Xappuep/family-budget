@@ -2008,6 +2008,82 @@
             border-color: rgba(255, 95, 104, 0.42);
         }
 
+        /* =========================================================
+           14b. PWA (Этап 7)
+           ========================================================= */
+
+        .pwa-install__status {
+            margin: 0 0 10px;
+            color: var(--green);
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .pwa-install__hint {
+            margin: 10px 0 0;
+            color: var(--text-muted);
+            font-size: 0.86rem;
+            line-height: 1.45;
+        }
+
+        .pwa-update-banner {
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+            z-index: 320;
+            max-width: 420px;
+            margin: 0 auto;
+            pointer-events: none;
+        }
+
+        .pwa-update-banner.hidden {
+            display: none;
+        }
+
+        .pwa-update-banner__body {
+            pointer-events: auto;
+            padding: 14px 14px 12px;
+            border: 1px solid color-mix(in srgb, var(--blue) 35%, var(--border));
+            border-radius: 14px;
+            background: color-mix(in srgb, var(--card) 92%, var(--blue));
+            box-shadow: var(--shadow);
+        }
+
+        .pwa-update-banner__title {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.95rem;
+        }
+
+        .pwa-update-banner__text {
+            margin: 0 0 12px;
+            color: var(--text-muted);
+            font-size: 0.86rem;
+            line-height: 1.4;
+        }
+
+        .pwa-update-banner__actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .pwa-update-banner__actions .button {
+            min-height: 44px;
+            justify-content: center;
+        }
+
+        @media (min-width: 901px) {
+            .pwa-update-banner {
+                left: auto;
+                right: 18px;
+                bottom: 86px;
+                width: min(380px, calc(100% - 36px));
+                margin: 0;
+            }
+        }
+
         @keyframes toastIn {
             from {
                 opacity: 0;

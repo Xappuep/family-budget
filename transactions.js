@@ -159,8 +159,9 @@
             const type = elements.transactionTypeFilter.value;
             const month = elements.transactionMonthFilter.value;
 
-            return [...state.transactions]
-                .filter((transaction) => {
+            return state.transactions
+                .map((transaction, index) => ({ transaction, index }))
+                .filter(({ transaction }) => {
                     const searchableText = [
                         getAccountById(transaction.accountId)?.name,
                         transaction.category,
@@ -181,9 +182,8 @@
 
                     return matchesSearch && matchesType && matchesMonth;
                 })
-                .sort((first, second) => {
-                    return second.date.localeCompare(first.date);
-                });
+                .sort(compareTransactionsNewestFirst)
+                .map(({ transaction }) => transaction);
         }
 
         /**

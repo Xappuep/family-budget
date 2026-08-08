@@ -223,6 +223,54 @@
             if (dateRange.to && transaction.date > dateRange.to) return false;
             return true;
         }
+
+        /**
+         * Корректный createdAt операции или пустая строка для legacy-записей.
+         */
+        function getTransactionCreatedAtValue(transaction) {
+            return typeof transaction?.createdAt === "string" && transaction.createdAt
+                ? transaction.createdAt
+                : "";
+        }
+
+        /**
+         * Единый comparator: сначала date ↓, затем createdAt ↓, иначе индекс в массиве ↓.
+         * Элементы: { transaction, index }. Не мутирует state.
+         */
+        function compareTransactionsNewestFirst(first, second) {
+            const firstDate = String(first.transaction?.date || "");
+            const secondDate = String(second.transaction?.date || "");
+            const byDate = secondDate.localeCompare(firstDate);
+
+            if (byDate !== 0) {
+                return byDate;
+            }
+
+            const firstCreated = getTransactionCreatedAtValue(first.transaction);
+            const secondCreated = getTransactionCreatedAtValue(second.transaction);
+
+            if (firstCreated && secondCreated) {
+                const byCreated = secondCreated.localeCompare(firstCreated);
+
+                if (byCreated !== 0) {
+                    return byCreated;
+                }
+            }
+
+            return second.index - first.index;
+        }
+
+        /**
+         * Копия списка операций, отсортированная newest-first.
+         * Индексы берутся из исходного массива (важно для legacy без createdAt).
+         */
+        function sortTransactionsNewestFirst(transactions) {
+            return transactions
+                .map((transaction, index) => ({ transaction, index }))
+                .sort(compareTransactionsNewestFirst)
+                .map(({ transaction }) => transaction);
+        }
+
         function calculateSummary(dateRange = null) {
             const incomeTransactions = state.transactions.filter(
                 (transaction) => transaction.type === "income" && isTransactionInDateRange(transaction, dateRange)

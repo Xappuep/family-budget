@@ -393,3 +393,65 @@ test("storage migrates and validates a version 1 backup", () => {
     assert.equal(context.storageContract.validated.transactions[0].amount, 1_234);
     assert.equal(context.storageContract.validated.transactions[0].accountId, "account-1");
 });
+
+test("transactions sort by date then createdAt without mutating state", () => {
+    const context = createHarness();
+    vm.runInContext(`
+        this.sortApi = {
+            sortTransactionsNewestFirst,
+            compareTransactionsNewestFirst
+        };
+    `, context);
+
+    const source = [
+        {
+            id: "legacy",
+            date: "2026-08-08",
+            amount: 50,
+            category: "Старая"
+        },
+        {
+            id: "a",
+            date: "2026-08-08",
+            amount: 100,
+            category: "Продукты",
+            createdAt: "2026-08-08T10:00:00.000Z"
+        },
+        {
+            id: "b",
+            date: "2026-08-08",
+            amount: 200,
+            category: "Продукты",
+            createdAt: "2026-08-08T10:01:00.000Z"
+        },
+        {
+            id: "c",
+            date: "2026-08-08",
+            amount: 300,
+            category: "Продукты",
+            createdAt: "2026-08-08T10:02:00.000Z"
+        },
+        {
+            id: "older-day",
+            date: "2026-08-07",
+            amount: 999,
+            category: "Вчера",
+            createdAt: "2026-08-08T12:00:00.000Z"
+        }
+    ];
+    const snapshot = JSON.stringify(source);
+
+    const sorted = context.sortApi.sortTransactionsNewestFirst(source);
+
+    assert.deepEqual(
+        sorted.map((item) => item.amount),
+        [300, 200, 100, 50, 999]
+    );
+    assert.equal(JSON.stringify(source), snapshot);
+    assert.notEqual(sorted, source);
+
+    // date wins over a later createdAt on an older calendar day
+    assert.equal(sorted[0].date, "2026-08-08");
+    assert.equal(sorted[sorted.length - 1].amount, 999);
+    assert.equal(sorted[3].id, "legacy");
+});

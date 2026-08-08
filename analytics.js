@@ -55,32 +55,11 @@
         }
 
         /**
-         * Последние операции для Mobile Dashboard (копия массива, без мутации state).
-         *
-         * Порядок:
-         * 1) дата операции по убыванию;
-         * 2) при одинаковой дате — позже добавленная выше.
-         *
-         * Новые операции добавляются через push() в конец state.transactions,
-         * порядок массива сохраняется в localStorage → больший индекс = новее.
-         * Поле createdAt / schemaVersion для сортировки не требуются.
+         * Последние операции для Mobile Dashboard.
+         * Тот же comparator, что и у вкладки «Операции» (без мутации state).
          */
         function getRecentTransactions(limit = 5) {
-            return state.transactions
-                .map((transaction, index) => ({ transaction, index }))
-                .sort((first, second) => {
-                    const byDate = second.transaction.date.localeCompare(
-                        first.transaction.date
-                    );
-
-                    if (byDate !== 0) {
-                        return byDate;
-                    }
-
-                    return second.index - first.index;
-                })
-                .slice(0, limit)
-                .map(({ transaction }) => transaction);
+            return sortTransactionsNewestFirst(state.transactions).slice(0, limit);
         }
 
         /**

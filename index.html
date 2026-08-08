@@ -85,7 +85,7 @@
              ===================================================== -->
 
         <section class="section" id="summary" data-mobile-screen="home">
-            <div class="section__header">
+            <div class="section__header desktop-summary-header">
                 <div>
                     <h2>Финансовая сводка</h2>
                     <p>Общая картина по всем внесённым данным.</p>
@@ -111,7 +111,8 @@
                     <div class="field"><label for="summaryDateTo">По дату</label><input id="summaryDateTo" type="date"></div>
                 </div>
             </div>
-            <div class="summary-grid">
+
+            <div class="summary-grid desktop-summary-grid">
                 <article class="card summary-card summary-card--income">
                     <div class="summary-card__label">
                         <span>↗</span>
@@ -171,6 +172,63 @@
                         Активных целей: 0
                     </div>
                 </article>
+            </div>
+
+            <!-- Компактная Главная только для смартфона (≤620px); desktop не затрагивает -->
+            <div class="mobile-dashboard" id="mobileDashboard">
+                <div class="mobile-dashboard__available">
+                    <div class="mobile-dashboard__eyebrow">Доступно</div>
+                    <div class="mobile-dashboard__balance" id="mobileAvailableBalance">0 ₽</div>
+                    <div class="mobile-dashboard__hint" id="mobileAvailableNote">
+                        Текущий доступный остаток
+                    </div>
+                </div>
+
+                <div class="mobile-dashboard__metrics" aria-label="Доходы и расходы за период">
+                    <div class="mobile-dashboard__metric">
+                        <div
+                            class="mobile-dashboard__metric-value mobile-dashboard__metric-value--income positive"
+                            id="mobileIncome"
+                        >
+                            0 ₽
+                        </div>
+                        <div class="mobile-dashboard__metric-label">Доходы</div>
+                    </div>
+                    <div class="mobile-dashboard__metric">
+                        <div
+                            class="mobile-dashboard__metric-value mobile-dashboard__metric-value--expense negative"
+                            id="mobileExpense"
+                        >
+                            0 ₽
+                        </div>
+                        <div class="mobile-dashboard__metric-label">Расходы</div>
+                    </div>
+                </div>
+
+                <div class="mobile-dashboard__metrics mobile-dashboard__metrics--secondary" aria-label="Накопления и цели">
+                    <div class="mobile-dashboard__metric">
+                        <div class="mobile-dashboard__metric-label">Накопления</div>
+                        <div class="mobile-dashboard__metric-value" id="mobileSavings">0 ₽</div>
+                    </div>
+                    <div class="mobile-dashboard__metric">
+                        <div class="mobile-dashboard__metric-label">Цели</div>
+                        <div class="mobile-dashboard__metric-value" id="mobileGoalsActive">0 активных</div>
+                    </div>
+                </div>
+
+                <section class="mobile-dashboard__recent" aria-labelledby="mobileRecentHeading">
+                    <div class="mobile-dashboard__recent-header">
+                        <h3 id="mobileRecentHeading">Последние операции</h3>
+                        <button
+                            class="mobile-dashboard__all"
+                            id="mobileViewAllTransactions"
+                            type="button"
+                        >
+                            Все →
+                        </button>
+                    </div>
+                    <div id="mobileRecentTransactions" class="mobile-dashboard__recent-list"></div>
+                </section>
             </div>
         </section>
 

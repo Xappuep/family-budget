@@ -1158,7 +1158,8 @@
            ========================================================= */
 
         .mobile-nav,
-        .mobile-tools-section {
+        .mobile-tools-section,
+        .mobile-dashboard {
             display: none;
         }
 
@@ -1340,6 +1341,248 @@
             .toast-container {
                 bottom: calc(80px + env(safe-area-inset-bottom, 0px));
             }
+
+            /* ---------- Mobile Dashboard (Этап 2) ---------- */
+
+            #summary.section {
+                margin-top: 8px;
+                margin-bottom: 8px;
+            }
+
+            .desktop-summary-header,
+            .desktop-summary-grid {
+                display: none !important;
+            }
+
+            .mobile-dashboard {
+                display: grid;
+                gap: 14px;
+            }
+
+            .summary-period {
+                align-items: stretch;
+                flex-direction: column;
+                gap: 8px;
+                margin-bottom: 4px;
+            }
+
+            .summary-period > .field {
+                width: 100%;
+            }
+
+            .summary-period > .field label {
+                font-size: 0.75rem;
+                margin-bottom: 4px;
+            }
+
+            .summary-period select {
+                min-height: 42px;
+                font-size: 0.95rem;
+            }
+
+            .summary-period__custom {
+                gap: 8px;
+            }
+
+            .summary-period__custom .field {
+                min-width: 0;
+                flex: 1;
+            }
+
+            .mobile-dashboard__available {
+                padding: 4px 0 2px;
+            }
+
+            .mobile-dashboard__eyebrow {
+                margin-bottom: 2px;
+                color: var(--text-muted);
+                font-size: 0.8rem;
+                font-weight: 600;
+                letter-spacing: 0.02em;
+                text-transform: uppercase;
+            }
+
+            .mobile-dashboard__balance {
+                margin: 0;
+                font-size: clamp(1.75rem, 7vw, 2.15rem);
+                font-weight: 800;
+                line-height: 1.15;
+                letter-spacing: -0.02em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .mobile-dashboard__hint {
+                margin-top: 4px;
+                color: var(--text-muted);
+                font-size: 0.8rem;
+                line-height: 1.3;
+            }
+
+            .mobile-dashboard__metrics {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px 12px;
+                padding: 10px 0;
+                border-top: 1px solid var(--border);
+                border-bottom: 1px solid var(--border);
+            }
+
+            .mobile-dashboard__metrics--secondary {
+                padding-top: 2px;
+                padding-bottom: 2px;
+                border-top: 0;
+                border-bottom: 0;
+            }
+
+            .mobile-dashboard__metric {
+                min-width: 0;
+            }
+
+            .mobile-dashboard__metric-value {
+                font-size: 1.05rem;
+                font-weight: 700;
+                line-height: 1.25;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .mobile-dashboard__metric-value--income::before {
+                content: "+";
+            }
+
+            .mobile-dashboard__metric-value--expense::before {
+                content: "−";
+            }
+
+            .mobile-dashboard__metric-label {
+                margin-top: 2px;
+                color: var(--text-muted);
+                font-size: 0.78rem;
+                font-weight: 600;
+            }
+
+            .mobile-dashboard__metrics--secondary .mobile-dashboard__metric-label {
+                margin-top: 0;
+                margin-bottom: 2px;
+            }
+
+            .mobile-dashboard__recent-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                margin-bottom: 8px;
+            }
+
+            .mobile-dashboard__recent-header h3 {
+                margin: 0;
+                font-size: 0.95rem;
+                font-weight: 700;
+                line-height: 1.2;
+            }
+
+            .mobile-dashboard__all {
+                flex-shrink: 0;
+                min-height: 36px;
+                padding: 4px 8px;
+                border: 0;
+                border-radius: 8px;
+                color: var(--blue);
+                background: transparent;
+                font: inherit;
+                font-size: 0.85rem;
+                font-weight: 700;
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .mobile-dashboard__all:hover,
+            .mobile-dashboard__all:focus-visible {
+                color: var(--text);
+                outline: none;
+            }
+
+            .mobile-dashboard__all:focus-visible {
+                box-shadow: 0 0 0 2px var(--focus-ring);
+            }
+
+            .mobile-dashboard__recent-list {
+                display: grid;
+                gap: 6px;
+            }
+
+            .mobile-dashboard__tx {
+                min-width: 0;
+                padding: 8px 0;
+                border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+            }
+
+            .mobile-dashboard__tx:last-child {
+                border-bottom: 0;
+                padding-bottom: 0;
+            }
+
+            .mobile-dashboard__tx-main {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                gap: 10px;
+            }
+
+            .mobile-dashboard__tx-category {
+                min-width: 0;
+                overflow: hidden;
+                font-size: 0.95rem;
+                font-weight: 700;
+                line-height: 1.25;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .mobile-dashboard__tx-amount {
+                flex-shrink: 0;
+                font-size: 0.95rem;
+                font-weight: 700;
+                line-height: 1.25;
+                white-space: nowrap;
+            }
+
+            .mobile-dashboard__tx-meta {
+                margin-top: 2px;
+                color: var(--text-muted);
+                font-size: 0.78rem;
+                line-height: 1.3;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .mobile-dashboard__empty {
+                padding: 10px 0 4px;
+            }
+
+            .mobile-dashboard__empty-icon {
+                margin-bottom: 4px;
+                color: var(--text-muted);
+                font-size: 1.1rem;
+                opacity: 0.7;
+            }
+
+            .mobile-dashboard__empty-title {
+                margin: 0 0 4px;
+                font-size: 0.9rem;
+                font-weight: 700;
+            }
+
+            .mobile-dashboard__empty-text {
+                margin: 0;
+                color: var(--text-muted);
+                font-size: 0.8rem;
+                line-height: 1.35;
+            }
         }
 
         /* =========================================================
@@ -1362,12 +1605,21 @@
             .toast-container,
             .theme-toggle,
             .mobile-nav,
-            .mobile-tools-section {
+            .mobile-tools-section,
+            .mobile-dashboard {
                 display: none !important;
             }
 
             .section[data-mobile-screen] {
                 display: block !important;
+            }
+
+            .desktop-summary-header {
+                display: flex !important;
+            }
+
+            .desktop-summary-grid {
+                display: grid !important;
             }
 
             .card {

@@ -255,6 +255,12 @@
             elements.mobileThemeButton.addEventListener("click", toggleTheme);
         }
 
+        if (elements.mobileViewAllTransactions) {
+            elements.mobileViewAllTransactions.addEventListener("click", () => {
+                setMobileTab("operations");
+            });
+        }
+
         /* =========================================================
            15. ЗАПУСК ПРИЛОЖЕНИЯ
            ========================================================= */

@@ -8,6 +8,10 @@
                 data: state
             };
 
+            if (typeof exportVoiceHabitsForBackup === "function") {
+                exportObject.voiceHabits = exportVoiceHabitsForBackup();
+            }
+
             const json = JSON.stringify(exportObject, null, 2);
             const blob = new Blob([json], {
                 type: "application/json;charset=utf-8"
@@ -69,6 +73,20 @@ const confirmed = window.confirm(
                         contributions: importedState.contributions
                     });
 
+                    if (
+                        Object.prototype.hasOwnProperty.call(
+                            parsed,
+                            "voiceHabits"
+                        ) &&
+                        typeof importVoiceHabitsFromBackup === "function"
+                    ) {
+                        importVoiceHabitsFromBackup(parsed.voiceHabits);
+                    }
+
+                    if (typeof renderVoiceHabitsPanel === "function") {
+                        renderVoiceHabitsPanel();
+                    }
+
                     resetAllForms();
                     commitChanges();
                     showToast("Данные успешно импортированы.");
@@ -108,6 +126,19 @@ const confirmed = window.confirm(
             resetState();
 
             localStorage.removeItem(STORAGE_KEY);
+
+            if (typeof VOICE_HABITS_STORAGE_KEY === "string") {
+                localStorage.removeItem(VOICE_HABITS_STORAGE_KEY);
+            }
+
+            if (typeof clearVoiceHabits === "function") {
+                clearVoiceHabits();
+            }
+
+            if (typeof renderVoiceHabitsPanel === "function") {
+                renderVoiceHabitsPanel();
+            }
+
             resetAllForms();
             renderAll();
 

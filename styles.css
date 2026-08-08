@@ -1646,10 +1646,106 @@
             line-height: 1.4;
         }
 
-        .quick-add-voice__again {
-            min-height: 44px;
-            width: 100%;
-            justify-content: center;
+        .quick-add-voice__habit-hint {
+            display: inline-block;
+            margin-top: 4px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .quick-add-voice__habit-prompt {
+            margin-top: 4px;
+        }
+
+        .quick-add-voice__habit-card {
+            padding: 12px;
+            border: 1px solid color-mix(in srgb, var(--orange) 40%, var(--border));
+            border-radius: 12px;
+            background: color-mix(in srgb, var(--orange) 10%, var(--card));
+        }
+
+        .quick-add-voice__habit-card-title {
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            font-weight: 800;
+        }
+
+        .quick-add-voice__habit-card-map {
+            margin: 0 0 10px;
+            font-size: 0.92rem;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+        }
+
+        .quick-add-voice__habit-pending {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .voice-habits__intro {
+            margin: 0 0 12px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .voice-habits__empty {
+            display: grid;
+            gap: 4px;
+            margin-bottom: 10px;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            line-height: 1.4;
+        }
+
+        .voice-habits__empty.hidden {
+            display: none;
+        }
+
+        .voice-habits__empty strong {
+            color: var(--text);
+        }
+
+        .voice-habits__list {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 12px;
+            max-width: 100%;
+        }
+
+        .voice-habits__row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface-subtle);
+            min-width: 0;
+        }
+
+        .voice-habits__copy {
+            display: grid;
+            gap: 2px;
+            min-width: 0;
+        }
+
+        .voice-habits__phrase {
+            overflow-wrap: anywhere;
+        }
+
+        .voice-habits__arrow {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            overflow-wrap: anywhere;
+        }
+
+        .voice-habits__menu {
+            flex-shrink: 0;
         }
 
         .mobile-dashboard__voice-wrap {

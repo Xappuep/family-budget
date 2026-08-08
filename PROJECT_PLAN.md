@@ -281,7 +281,7 @@ Desktop-таблицу сохранить для больших экранов.
 
 Пользовательская проверка успешно завершена: mobile goals/accounts, transient forms, category chips, menu stacking, cache-busting на физическом Android.
 
-### Этап 6. Voice Input v1 — IN PROGRESS
+### Этап 6. Voice Input v1 — DONE
 
 Добавить голосовой ввод без обязательного AI API.
 
@@ -320,9 +320,9 @@ Speech-to-Text
 
 AI API на данном этапе не использовать.
 
-Реализация Voice Input v1 завершена. Основной Voice Flow успешно проверен на физическом Android. Выполняется финальная UX-корректировка Home Voice CTA, Quick Add initial viewport/category density и horizontal clamp mobile action menus.
+Пользовательская проверка успешно завершена на физическом Android: SpeechRecognition, parser, preview, confirm-only save, Home Voice CTA, Quick Add без autofocus, category disclosure, menu clamp.
 
-### Этап 6.1. Локальный словарь привычек — PLANNED
+### Этап 6.1. Локальный словарь привычек — IN PROGRESS
 
 Позволить системе запоминать типичные соответствия.
 
@@ -330,12 +330,14 @@ AI API на данном этапе не использовать.
 
 Пятёрочка → Продукты
 Лента → Продукты
-Лукойл → Топливо
+Лукойл → Транспорт
 Яндекс Go → Транспорт
 
 Словарь хранить локально.
 
 В дальнейшем возможно автоматическое обучение словаря на исправлениях пользователя.
+
+Реализация локального словаря голосовых привычек завершена и ожидает пользовательской проверки на физическом Android.
 
 ### Этап 7. PWA — PLANNED
 
@@ -450,4 +452,5 @@ localStorage → IndexedDB.
 | 2026-08-08 | Этап 3 | Quick Add bottom sheet для кнопки «+»: расход/доход, сумма, категория, счёт; дата/член семьи/комментарий в «Дополнительно»; общий helper создания операции (`validateTransactionFields` / `addTransaction`); выбор счёта по `createdAt` | Пользовательская проверка успешно завершена. Этап 4 не выполнялся на момент закрытия Этапа 3 |
 | 2026-08-08 | Этап 4 | Mobile Transaction Feed: мобильная лента операций с группировкой по дате; desktop-таблица сохранена; форма добавления скрыта на mobile вне редактирования; корректировка touch targets `⋯` и порядка Desktop UI (форма → фильтры → таблица) | `npm test` — 24/24; `node --check` transactions/ui/app/calculations/dates/formatting — OK. Пользовательская проверка успешно завершена |
 | 2026-08-08 | Этап 5 | Mobile Goals & Accounts + UX; menu stacking; Quick Add category chips; cache-busting | Пользовательская проверка успешно завершена. Этап 6 разрешён |
-| 2026-08-08 | Этап 6 | Voice Input v1; parser fixes; UX: Home Voice CTA, Quick Add без autofocus суммы, category disclosure, menu horizontal clamp | Основной flow на Android OK; финальная UX-корректировка. Этап 6.1 не выполнялся |
+| 2026-08-08 | Этап 6 | Voice Input v1 | Пользовательская проверка на Android успешно завершена |
+| 2026-08-08 | Этап 6.1 | Локальный словарь голосовых привычек (`voice-habits.js`, explicit consent, optional backup field) | Ожидает проверки на физическом Android. Этап 7 не выполнялся |

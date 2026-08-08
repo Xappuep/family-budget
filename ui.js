@@ -228,6 +228,14 @@
             quickAddVoiceStatus: document.getElementById("quickAddVoiceStatus"),
             quickAddVoicePreview: document.getElementById("quickAddVoicePreview"),
             homeVoiceButton: document.getElementById("homeVoiceButton"),
+            voiceHabitsList: document.getElementById("voiceHabitsList"),
+            voiceHabitsEmpty: document.getElementById("voiceHabitsEmpty"),
+            clearVoiceHabitsButton: document.getElementById(
+                "clearVoiceHabitsButton"
+            ),
+            quickAddVoiceHabitPrompt: document.getElementById(
+                "quickAddVoiceHabitPrompt"
+            ),
 
             toastContainer: document.getElementById("toastContainer"),
 

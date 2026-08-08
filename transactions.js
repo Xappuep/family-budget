@@ -357,6 +357,10 @@
             if (elements.quickAddCategoriesDisclosure) {
                 elements.quickAddCategoriesDisclosure.open = false;
             }
+
+            if (typeof evaluateVoiceHabitPrompt === "function") {
+                evaluateVoiceHabitPrompt();
+            }
         }
 
         function handleQuickAddCategoriesClick(event) {
@@ -569,6 +573,11 @@
             });
 
             addTransaction(payload);
+
+            if (typeof commitPendingVoiceHabit === "function") {
+                commitPendingVoiceHabit();
+            }
+
             closeQuickAddSheet();
         }
 

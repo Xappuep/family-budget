@@ -10,6 +10,10 @@ let voiceRecognitionActive = false;
 let voiceDraftActive = false;
 let voiceIgnoreResults = false;
 let voiceUserAborted = false;
+/** @type {null | { phrase: string, category: string, mode: "create" | "update", previousCategory?: string }} */
+let pendingVoiceHabit = null;
+/** @type {null | object} */
+let lastVoiceParseResult = null;
 
 function isSpeechRecognitionSupported() {
     return Boolean(
@@ -151,8 +155,24 @@ function setVoiceListeningUi(isListening) {
     }
 }
 
+function clearPendingVoiceHabit() {
+    pendingVoiceHabit = null;
+    lastVoiceParseResult = null;
+    hideVoiceHabitPrompt();
+}
+
+function hideVoiceHabitPrompt() {
+    if (!elements.quickAddVoiceHabitPrompt) {
+        return;
+    }
+
+    elements.quickAddVoiceHabitPrompt.classList.add("hidden");
+    elements.quickAddVoiceHabitPrompt.innerHTML = "";
+}
+
 function clearVoicePreview() {
     voiceDraftActive = false;
+    clearPendingVoiceHabit();
 
     if (elements.quickAddVoicePreview) {
         elements.quickAddVoicePreview.classList.add("hidden");
@@ -230,6 +250,10 @@ function renderVoicePreview(parsed) {
     const categoryLabel = parsed.category || "категория не выбрана";
     const dateLabel = formatVoicePreviewDate(parsed.date);
     const warnings = Array.isArray(parsed.warnings) ? parsed.warnings : [];
+    const habitHint =
+        parsed.categorySource === "habit" && parsed.habitMatch?.phrase
+            ? `${categoryLabel} · из локальной привычки «${parsed.habitMatch.phrase}»`
+            : "";
 
     voiceDraftActive = true;
     elements.quickAddVoicePreview.classList.remove("hidden");
@@ -243,6 +267,11 @@ function renderVoicePreview(parsed) {
             <p class="quick-add-voice__summary">
                 ${escapeHTML(typeLabel)} · ${escapeHTML(amountLabel)}<br>
                 ${escapeHTML(categoryLabel)}<br>
+                ${
+                    habitHint
+                        ? `<span class="quick-add-voice__habit-hint">${escapeHTML(habitHint)}</span><br>`
+                        : ""
+                }
                 ${escapeHTML(accountName)}<br>
                 ${escapeHTML(dateLabel)}
                 ${
@@ -262,6 +291,10 @@ function renderVoicePreview(parsed) {
                       .join("")}</ul>`
                 : ""
         }
+        <div
+            class="quick-add-voice__habit-prompt hidden"
+            id="quickAddVoiceHabitPrompt"
+        ></div>
         <p class="quick-add-voice__privacy">Операция сохранится только после вашего подтверждения.</p>
         <button
             class="button button--secondary quick-add-voice__again"
@@ -272,6 +305,10 @@ function renderVoicePreview(parsed) {
         </button>
     `;
 
+    elements.quickAddVoiceHabitPrompt = document.getElementById(
+        "quickAddVoiceHabitPrompt"
+    );
+
     if (typeof updateQuickAddSubmitLabel === "function") {
         updateQuickAddSubmitLabel();
     }
@@ -281,6 +318,9 @@ function applyVoiceParseResult(parsed) {
     if (!parsed || !isQuickAddOpen()) {
         return;
     }
+
+    clearPendingVoiceHabit();
+    lastVoiceParseResult = parsed;
 
     setQuickAddType(parsed.type === "income" ? "income" : "expense");
 
@@ -316,9 +356,15 @@ function applyVoiceParseResult(parsed) {
 
     showFormMessage(elements.quickAddMessage, "");
     renderVoicePreview(parsed);
+    evaluateVoiceHabitPrompt();
 }
 
 function buildVoiceParserContext() {
+    const habits =
+        typeof getVoiceHabitMappings === "function"
+            ? getVoiceHabitMappings()
+            : [];
+
     return {
         accounts: (state.accounts || []).map((account) => ({
             id: account.id,
@@ -326,8 +372,175 @@ function buildVoiceParserContext() {
         })),
         preferredAccountId: getPreferredTransactionAccountId(),
         today: getToday(),
-        categories: QUICK_ADD_CATEGORIES
+        categories: QUICK_ADD_CATEGORIES,
+        habits
     };
+}
+
+function showVoiceHabitPrompt(options) {
+    const prompt = elements.quickAddVoiceHabitPrompt;
+
+    if (!prompt) {
+        return;
+    }
+
+    const { mode, phrase, category, previousCategory } = options;
+    const isUpdate = mode === "update";
+
+    prompt.classList.remove("hidden");
+    prompt.innerHTML = `
+        <div class="quick-add-voice__habit-card">
+            <div class="quick-add-voice__habit-card-title">
+                ${isUpdate ? "Обновить правило?" : "Запомнить на будущее?"}
+            </div>
+            <p class="quick-add-voice__habit-card-map">
+                ${
+                    isUpdate
+                        ? `${escapeHTML(phrase)}:<br>${escapeHTML(previousCategory || "")} → ${escapeHTML(category)}`
+                        : `${escapeHTML(phrase)} → ${escapeHTML(category)}`
+                }
+            </p>
+            <button
+                class="button button--primary button--small"
+                type="button"
+                data-voice-habit-action="${isUpdate ? "update" : "remember"}"
+            >
+                ${isUpdate ? "Обновить" : "Запомнить"}
+            </button>
+        </div>
+    `;
+}
+
+function evaluateVoiceHabitPrompt() {
+    if (!voiceDraftActive || !lastVoiceParseResult) {
+        hideVoiceHabitPrompt();
+        return;
+    }
+
+    const category = String(elements.quickAddCategory?.value || "").trim();
+
+    if (!category) {
+        hideVoiceHabitPrompt();
+        pendingVoiceHabit = null;
+        return;
+    }
+
+    const parsed = lastVoiceParseResult;
+    const source = parsed.categorySource || "none";
+
+    if (source === "explicit") {
+        hideVoiceHabitPrompt();
+        pendingVoiceHabit = null;
+        return;
+    }
+
+    if (source === "habit" && parsed.habitMatch?.phrase) {
+        const original = String(parsed.habitMatch.category || "").trim();
+
+        if (
+            original &&
+            original.localeCompare(category, "ru", { sensitivity: "accent" }) !== 0
+        ) {
+            showVoiceHabitPrompt({
+                mode: "update",
+                phrase: parsed.habitMatch.phrase,
+                category,
+                previousCategory: original
+            });
+            return;
+        }
+
+        hideVoiceHabitPrompt();
+        return;
+    }
+
+    const candidate = String(parsed.habitCandidate || "").trim();
+
+    if (
+        !candidate ||
+        (typeof isVoiceHabitGenericPhrase === "function" &&
+            isVoiceHabitGenericPhrase(candidate))
+    ) {
+        hideVoiceHabitPrompt();
+        return;
+    }
+
+    if (source === "none") {
+        showVoiceHabitPrompt({
+            mode: "create",
+            phrase: candidate,
+            category
+        });
+    }
+}
+
+function acceptPendingVoiceHabitFromPrompt(mode) {
+    if (!lastVoiceParseResult) {
+        return;
+    }
+
+    const category = String(elements.quickAddCategory?.value || "").trim();
+    const parsed = lastVoiceParseResult;
+
+    if (!category) {
+        return;
+    }
+
+    if (mode === "update" && parsed.habitMatch?.phrase) {
+        pendingVoiceHabit = {
+            mode: "update",
+            phrase: parsed.habitMatch.phrase,
+            category,
+            previousCategory: parsed.habitMatch.category
+        };
+    } else if (parsed.habitCandidate) {
+        pendingVoiceHabit = {
+            mode: "create",
+            phrase: parsed.habitCandidate,
+            category
+        };
+    } else {
+        return;
+    }
+
+    if (elements.quickAddVoiceHabitPrompt) {
+        elements.quickAddVoiceHabitPrompt.innerHTML = `
+            <p class="quick-add-voice__habit-pending">
+                Правило будет сохранено после подтверждения операции.
+            </p>
+        `;
+        elements.quickAddVoiceHabitPrompt.classList.remove("hidden");
+    }
+}
+
+function commitPendingVoiceHabit() {
+    if (!pendingVoiceHabit) {
+        return;
+    }
+
+    if (typeof upsertVoiceHabit === "function") {
+        upsertVoiceHabit(pendingVoiceHabit.phrase, pendingVoiceHabit.category);
+    }
+
+    pendingVoiceHabit = null;
+
+    if (typeof renderVoiceHabitsPanel === "function") {
+        renderVoiceHabitsPanel();
+    }
+}
+
+function handleVoiceHabitPromptClick(event) {
+    const button = event.target.closest("[data-voice-habit-action]");
+
+    if (!button) {
+        return;
+    }
+
+    const action = button.dataset.voiceHabitAction;
+
+    if (action === "remember" || action === "update") {
+        acceptPendingVoiceHabitFromPrompt(action === "update" ? "update" : "create");
+    }
 }
 
 function handleVoiceTranscript(transcript) {
@@ -428,6 +641,8 @@ function startVoiceRecognition() {
     blurQuickAddInputs();
     voiceIgnoreResults = false;
     voiceUserAborted = false;
+    clearPendingVoiceHabit();
+    lastVoiceParseResult = null;
 
     const recognition = new Recognition();
     recognition.lang = "ru-RU";
@@ -518,6 +733,14 @@ function handleHomeVoiceButtonClick(event) {
 }
 
 function handleQuickAddVoicePreviewClick(event) {
+    if (
+        event.target.closest("[data-voice-habit-action]") &&
+        elements.quickAddVoicePreview?.contains(event.target)
+    ) {
+        handleVoiceHabitPromptClick(event);
+        return;
+    }
+
     const again = event.target.closest("#quickAddVoiceAgain, .quick-add-voice__again");
 
     if (!again || !elements.quickAddVoicePreview?.contains(again)) {
@@ -525,7 +748,142 @@ function handleQuickAddVoicePreviewClick(event) {
     }
 
     event.preventDefault();
+    clearPendingVoiceHabit();
     startVoiceRecognition();
+}
+
+function renderVoiceHabitsPanel() {
+    if (!elements.voiceHabitsList) {
+        return;
+    }
+
+    const mappings =
+        typeof getVoiceHabitMappings === "function" ? getVoiceHabitMappings() : [];
+
+    if (elements.voiceHabitsEmpty) {
+        elements.voiceHabitsEmpty.classList.toggle("hidden", mappings.length > 0);
+    }
+
+    if (elements.clearVoiceHabitsButton) {
+        elements.clearVoiceHabitsButton.classList.toggle(
+            "hidden",
+            mappings.length === 0
+        );
+        elements.clearVoiceHabitsButton.disabled = mappings.length === 0;
+    }
+
+    elements.voiceHabitsList.innerHTML = "";
+
+    if (mappings.length === 0) {
+        return;
+    }
+
+    mappings
+        .slice()
+        .sort((first, second) =>
+            String(first.phrase).localeCompare(String(second.phrase), "ru")
+        )
+        .forEach((habit) => {
+            const row = document.createElement("div");
+            row.className = "voice-habits__row";
+            row.dataset.habitId = habit.id;
+            row.innerHTML = `
+                <div class="voice-habits__copy">
+                    <strong class="voice-habits__phrase">${escapeHTML(habit.phrase)}</strong>
+                    <span class="voice-habits__arrow">→ ${escapeHTML(habit.category)}</span>
+                </div>
+                <div class="mobile-action-menu voice-habits__menu">
+                    <button
+                        class="mobile-action-menu__toggle"
+                        type="button"
+                        data-action="toggle-mobile-menu"
+                        aria-label="Действия с правилом"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                    >
+                        ⋯
+                    </button>
+                    <div class="mobile-action-menu__panel hidden" role="menu">
+                        <button
+                            class="mobile-action-menu__item mobile-action-menu__item--danger"
+                            type="button"
+                            role="menuitem"
+                            data-action="delete-voice-habit"
+                            data-id="${escapeHTML(habit.id)}"
+                        >
+                            Удалить
+                        </button>
+                    </div>
+                </div>
+            `;
+            elements.voiceHabitsList.appendChild(row);
+        });
+}
+
+function handleVoiceHabitsPanelClick(event) {
+    const toggle = event.target.closest("[data-action='toggle-mobile-menu']");
+
+    if (
+        toggle &&
+        elements.voiceHabitsList &&
+        elements.voiceHabitsList.contains(toggle)
+    ) {
+        toggleMobileActionMenu(toggle);
+        return;
+    }
+
+    const deleteButton = event.target.closest(
+        "[data-action='delete-voice-habit']"
+    );
+
+    if (
+        !deleteButton ||
+        !elements.voiceHabitsList ||
+        !elements.voiceHabitsList.contains(deleteButton)
+    ) {
+        return;
+    }
+
+    closeMobileActionMenus();
+    const habitId = deleteButton.dataset.id;
+
+    if (!habitId || typeof deleteVoiceHabit !== "function") {
+        return;
+    }
+
+    const confirmed = window.confirm("Удалить это голосовое правило?");
+
+    if (!confirmed) {
+        return;
+    }
+
+    deleteVoiceHabit(habitId);
+    renderVoiceHabitsPanel();
+    showToast("Голосовое правило удалено.");
+}
+
+function handleClearVoiceHabitsClick() {
+    const mappings =
+        typeof getVoiceHabitMappings === "function" ? getVoiceHabitMappings() : [];
+
+    if (mappings.length === 0) {
+        return;
+    }
+
+    const confirmed = window.confirm(
+        "Очистить весь словарь голосовых привычек? Операции и счета не изменятся."
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    if (typeof clearVoiceHabits === "function") {
+        clearVoiceHabits();
+    }
+
+    renderVoiceHabitsPanel();
+    showToast("Словарь голосовых привычек очищен.");
 }
 
 function initVoiceInput() {
@@ -538,6 +896,8 @@ function initVoiceInput() {
             elements.homeVoiceButton.disabled = true;
         }
     }
+
+    renderVoiceHabitsPanel();
 
     if (!isSpeechRecognitionSupported()) {
         setVoiceUnsupportedState();

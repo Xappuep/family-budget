@@ -649,6 +649,7 @@ function extractVoiceType(normalized, category, categories) {
  * @param {string} [context.preferredAccountId]
  * @param {string} context.today YYYY-MM-DD
  * @param {{expense:string[],income:string[]}} context.categories
+ * @param {Array<{phrase:string,normalizedPhrase?:string,category:string}>} [context.habits]
  */
 function parseVoiceTransaction(text, context = {}) {
     const transcript = String(text || "").trim();
@@ -657,22 +658,82 @@ function parseVoiceTransaction(text, context = {}) {
     const accounts = Array.isArray(context.accounts) ? context.accounts : [];
     const preferredAccountId = context.preferredAccountId || "";
     const categories = context.categories || {};
+    const habits = Array.isArray(context.habits) ? context.habits : [];
 
     const warnings = [];
     const amountInfo = extractVoiceAmount(normalized);
     const commentInfo = extractVoiceComment(normalized);
     const dateInfo = extractVoiceDate(normalized, today);
-    const categoryInfo = extractVoiceCategory(normalized, categories);
+    const explicitCategory = extractVoiceCategory(normalized, categories);
     const accountInfo = extractVoiceAccount(
         normalized,
         accounts,
         preferredAccountId
     );
-    const typeInfo = extractVoiceType(
-        normalized,
-        categoryInfo.category,
-        categories
-    );
+
+    let category = "";
+    let categorySource = "none";
+    let habitMatch = null;
+    let habitCandidate = "";
+
+    if (explicitCategory.recognized && explicitCategory.category) {
+        category = explicitCategory.category;
+        categorySource = "explicit";
+    } else if (typeof findVoiceHabitInMappings === "function") {
+        habitMatch = findVoiceHabitInMappings(habits, normalized);
+
+        if (habitMatch?.category) {
+            category = habitMatch.category;
+            categorySource = "habit";
+        }
+    } else {
+        const sortedHabits = habits
+            .slice()
+            .sort(
+                (first, second) =>
+                    String(second.normalizedPhrase || second.phrase || "")
+                        .length -
+                    String(first.normalizedPhrase || first.phrase || "").length
+            );
+
+        habitMatch =
+            sortedHabits.find((habit) => {
+                const phrase = normalizeVoiceText(
+                    habit.normalizedPhrase || habit.phrase || ""
+                );
+                if (!phrase) {
+                    return false;
+                }
+                const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                return new RegExp(`(?:^|\\s)${escaped}(?:\\s|$)`, "u").test(
+                    normalized
+                );
+            }) || null;
+
+        if (habitMatch?.category) {
+            category = habitMatch.category;
+            categorySource = "habit";
+        }
+    }
+
+    if (categorySource === "none" && typeof extractVoiceHabitCandidate === "function") {
+        const accountName =
+            accounts.find((account) => account.id === accountInfo.accountId)
+                ?.name || "";
+
+        habitCandidate = extractVoiceHabitCandidate(normalized, {
+            removeTexts: [
+                amountInfo.matchedText,
+                commentInfo.matchedText,
+                dateInfo.matchedText,
+                accountName,
+                ...VOICE_EXPENSE_MARKERS,
+                ...VOICE_INCOME_MARKERS
+            ]
+        });
+    }
+
+    const typeInfo = extractVoiceType(normalized, category, categories);
 
     if (!typeInfo.recognized) {
         warnings.push("Тип операции не распознан — выбран расход.");
@@ -682,7 +743,7 @@ function parseVoiceTransaction(text, context = {}) {
         warnings.push("Не удалось определить сумму.");
     }
 
-    if (!categoryInfo.recognized) {
+    if (categorySource === "none") {
         warnings.push("Категория не распознана — выберите её вручную.");
     }
 
@@ -703,14 +764,23 @@ function parseVoiceTransaction(text, context = {}) {
         transcript,
         type: typeInfo.type,
         amount: amountInfo.amount,
-        category: categoryInfo.category,
+        category,
         accountId: accountInfo.accountId,
         date: dateInfo.date,
         comment: commentInfo.comment,
+        categorySource,
+        habitMatch: habitMatch
+            ? {
+                  phrase: habitMatch.phrase,
+                  category: habitMatch.category,
+                  id: habitMatch.id || ""
+              }
+            : null,
+        habitCandidate,
         recognized: {
             type: typeInfo.recognized,
             amount: amountInfo.amount !== null,
-            category: categoryInfo.recognized,
+            category: categorySource !== "none",
             account: accountInfo.recognized && !accountInfo.ambiguous,
             date: dateInfo.recognized,
             comment: Boolean(commentInfo.comment)

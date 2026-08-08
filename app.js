@@ -168,6 +168,10 @@
         if (elements.quickAddCategory) {
             elements.quickAddCategory.addEventListener("input", () => {
                 syncQuickAddCategorySelection();
+
+                if (typeof evaluateVoiceHabitPrompt === "function") {
+                    evaluateVoiceHabitPrompt();
+                }
             });
         }
 
@@ -189,6 +193,20 @@
             elements.quickAddVoicePreview.addEventListener(
                 "click",
                 handleQuickAddVoicePreviewClick
+            );
+        }
+
+        if (elements.voiceHabitsList) {
+            elements.voiceHabitsList.addEventListener(
+                "click",
+                handleVoiceHabitsPanelClick
+            );
+        }
+
+        if (elements.clearVoiceHabitsButton) {
+            elements.clearVoiceHabitsButton.addEventListener(
+                "click",
+                handleClearVoiceHabitsClick
             );
         }
 

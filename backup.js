@@ -51,7 +51,7 @@
 
             const reader = new FileReader();
 
-            reader.onload = () => {
+            reader.onload = async () => {
                 try {
                     const parsed = JSON.parse(reader.result);
                     const migratedBackup = migrateImportedBackupMoney(parsed);
@@ -88,7 +88,14 @@ const confirmed = window.confirm(
                     }
 
                     resetAllForms();
-                    commitChanges();
+
+                    try {
+                        await commitChanges({ wait: true });
+                    } catch (_persistError) {
+                        // enqueueStatePersist already showed a storage toast
+                        return;
+                    }
+
                     showToast("Данные успешно импортированы.");
                 } catch (error) {
                     console.error("Ошибка импорта:", error);
@@ -113,7 +120,7 @@ const confirmed = window.confirm(
             reader.readAsText(file, "UTF-8");
         }
 
-        function resetAllData() {
+        async function resetAllData() {
             const confirmed = window.confirm(
                 "Удалить все операции, финансовые цели и вклады? " +
                 "Это действие нельзя отменить."
@@ -123,9 +130,12 @@ const confirmed = window.confirm(
                 return;
             }
 
-            resetState();
-
-            localStorage.removeItem(STORAGE_KEY);
+            if (typeof resetFinancialPersistence === "function") {
+                await resetFinancialPersistence();
+            } else {
+                resetState();
+                localStorage.removeItem(STORAGE_KEY);
+            }
 
             if (typeof VOICE_HABITS_STORAGE_KEY === "string") {
                 localStorage.removeItem(VOICE_HABITS_STORAGE_KEY);

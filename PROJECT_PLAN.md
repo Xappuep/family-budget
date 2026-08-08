@@ -339,7 +339,7 @@ AI API на данном этапе не использовать.
 
 Пользовательская проверка успешно завершена на физическом Android: локальные голосовые привычки, prompt рядом с Category, create/update/cancel, управление словарём.
 
-### Этап 7. PWA — IN PROGRESS
+### Этап 7. PWA — DONE
 
 Превратить веб-приложение в устанавливаемое Progressive Web App.
 
@@ -356,9 +356,9 @@ AI API на данном этапе не использовать.
 
 Сначала проверить реальную эксплуатацию PWA.
 
-PWA shell, manifest, icons, service worker, install UX, basic offline и controlled update flow реализованы. Физическая проверка Android успешно подтвердила install, standalone, offline и localStorage. Подготовлен контрольный релиз для проверки user-confirmed PWA update flow.
+Пользовательская проверка на физическом Android успешно подтвердила: install через Chrome, standalone, запуск с иконки, offline app shell, операции online/offline, сохранение localStorage, controlled PWA update (включая обновление до PWA 7.1) и сохранность данных после обновления.
 
-### Этап 8. IndexedDB — PLANNED
+### Этап 8. IndexedDB — IN PROGRESS
 
 После стабилизации интерфейса рассмотреть миграцию основного хранения:
 
@@ -374,6 +374,8 @@ localStorage → IndexedDB.
 Миграция должна быть обратимо и безопасно спроектирована.
 
 Нельзя потерять существующие пользовательские данные.
+
+IndexedDB primary persistence и автоматическая миграция legacy localStorage реализованы. Ожидает пользовательской проверки миграции существующих данных, persistence, offline, import/export и reset на физическом Android.
 
 ### Этап 9. Синхронизация нескольких устройств — OPTIONAL
 
@@ -456,4 +458,5 @@ localStorage → IndexedDB.
 | 2026-08-08 | Этап 5 | Mobile Goals & Accounts + UX; menu stacking; Quick Add category chips; cache-busting | Пользовательская проверка успешно завершена. Этап 6 разрешён |
 | 2026-08-08 | Этап 6 | Voice Input v1 | Пользовательская проверка на Android успешно завершена |
 | 2026-08-08 | Этап 6.1 | Локальный словарь голосовых привычек; UX: learning prompt рядом с Category | Пользовательская проверка на Android успешно завершена |
-| 2026-08-08 | Этап 7 | PWA: manifest, icons, SW, install UX, offline shell, controlled update | Ожидает проверки на физическом Android / GitHub Pages. Этап 8 не выполнялся |
+| 2026-08-08 | Этап 7 | PWA: manifest, icons, SW, install UX, offline shell, controlled update | Пользовательская проверка на Android успешно завершена |
+| 2026-08-08 | Этап 8 | IndexedDB primary persistence + auto migration from legacy localStorage | Ожидает проверки на физическом Android. Этап 9 не выполнялся |

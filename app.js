@@ -488,10 +488,21 @@
            15. ЗАПУСК ПРИЛОЖЕНИЯ
            ========================================================= */
 
-        function initializeApplication() {
+        async function initializeApplication() {
             setMobileTab("home", { scrollToTop: false });
             updateThemeToggleButton();
-            loadState();
+
+            try {
+                await loadState();
+            } catch (error) {
+                console.error("Ошибка инициализации хранилища:", error);
+                if (typeof showToast === "function") {
+                    showToast(
+                        "Не удалось загрузить данные. Перезапустите приложение.",
+                        "error"
+                    );
+                }
+            }
 
             resetTransactionForm();
             resetGoalForm();
@@ -506,6 +517,13 @@
             }
 
             renderAll();
+
+            if (typeof markApplicationReady === "function") {
+                markApplicationReady();
+            } else {
+                document.body.classList.remove("app-booting");
+                document.body.classList.add("app-ready");
+            }
         }
 
         initializeApplication();

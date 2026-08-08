@@ -334,57 +334,510 @@
 
             return { ...validatedState, accounts: cleanAccounts, transfers, transactions, contributions };
         }
-        function saveState() {
+        /* =========================================================
+           Persistence (Этап 8): IndexedDB primary + legacy migration
+           ========================================================= */
+
+        let financialStorageBackend = null;
+        let financialStorageReady = false;
+        let financialStorageError = null;
+        let persistQueue = Promise.resolve();
+
+        function cloneStateSnapshot(sourceState) {
+            if (typeof structuredClone === "function") {
+                try {
+                    return structuredClone(sourceState);
+                } catch (_error) {
+                    // Fall through to JSON clone.
+                }
+            }
+
+            return JSON.parse(JSON.stringify(sourceState));
+        }
+
+        function getFinancialStorageBackendMarker() {
             try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-            } catch (error) {
-                console.error("Ошибка сохранения:", error);
-                showToast("Не удалось сохранить данные в браузере.", "error");
+                return localStorage.getItem(STORAGE_BACKEND_KEY);
+            } catch (_error) {
+                return null;
             }
         }
 
-        function loadState() {
-            try {
-                const savedData = localStorage.getItem(STORAGE_KEY);
+        function setFinancialStorageBackendMarker(value) {
+            localStorage.setItem(STORAGE_BACKEND_KEY, value);
+        }
 
-                if (!savedData) {
-                    return;
+        function clearFinancialStorageBackendMarker() {
+            localStorage.removeItem(STORAGE_BACKEND_KEY);
+        }
+
+        function hasMigrationBackup() {
+            try {
+                return localStorage.getItem(STORAGE_MIGRATION_BACKUP_KEY) !== null;
+            } catch (_error) {
+                return false;
+            }
+        }
+
+        function ensureMigrationBackup(rawLegacyString) {
+            if (rawLegacyString === null || rawLegacyString === undefined) {
+                return false;
+            }
+
+            if (hasMigrationBackup()) {
+                return false;
+            }
+
+            localStorage.setItem(
+                STORAGE_MIGRATION_BACKUP_KEY,
+                String(rawLegacyString)
+            );
+            return true;
+        }
+
+        function clearMigrationBackup() {
+            localStorage.removeItem(STORAGE_MIGRATION_BACKUP_KEY);
+        }
+
+        /**
+         * Pure helper: choose where financial state should come from.
+         */
+        function resolveFinancialStorageSource(options) {
+            const {
+                indexedDbAvailable,
+                hasIndexedDbState,
+                hasLegacyState,
+                backendMarker
+            } = options;
+
+            const markedIndexedDb = backendMarker === STORAGE_BACKEND_INDEXEDDB;
+
+            if (markedIndexedDb) {
+                if (!indexedDbAvailable) {
+                    return {
+                        action: "error",
+                        reason: "indexeddb-unavailable-after-migration"
+                    };
                 }
 
-                const parsedData = migrateStateMoneyToMinor(JSON.parse(savedData));
+                if (hasIndexedDbState) {
+                    return { action: "use-indexeddb" };
+                }
 
-                const accounts = Array.isArray(parsedData.accounts) && parsedData.accounts.length
+                return { action: "use-indexeddb-empty" };
+            }
+
+            if (hasIndexedDbState) {
+                return { action: "use-indexeddb" };
+            }
+
+            if (!indexedDbAvailable) {
+                if (hasLegacyState) {
+                    return { action: "use-localstorage-fallback" };
+                }
+
+                return { action: "use-localstorage-empty" };
+            }
+
+            if (hasLegacyState) {
+                return { action: "migrate-legacy" };
+            }
+
+            return { action: "init-indexeddb-empty" };
+        }
+
+        /**
+         * Shared normalization for legacy localStorage and IndexedDB loads.
+         */
+        function normalizeStoredState(rawState) {
+            if (!rawState || typeof rawState !== "object") {
+                return createInitialState();
+            }
+
+            const parsedData = migrateStateMoneyToMinor(rawState);
+            const accounts =
+                Array.isArray(parsedData.accounts) && parsedData.accounts.length
                     ? parsedData.accounts
                     : [createDefaultAccount()];
-                const fallbackAccountId = accounts[0].id;
+            const fallbackAccountId = accounts[0].id;
 
-                replaceState({
-                    schemaVersion: CURRENT_SCHEMA_VERSION,
-                    accounts,
-                    transfers: Array.isArray(parsedData.transfers) ? parsedData.transfers : [],
-                    transactions: Array.isArray(parsedData.transactions)
-                        ? parsedData.transactions.map((transaction) => ({
-                            ...transaction,
-                            accountId: transaction.accountId || fallbackAccountId
-                        }))
-                        : [],
-                    goals: Array.isArray(parsedData.goals)
-                        ? parsedData.goals.map(normalizeGoal)
-                        : [],
-                    contributions: Array.isArray(parsedData.contributions)
-                        ? parsedData.contributions.map((contribution) => ({
-                            ...contribution,
-                            accountId: contribution.accountId || fallbackAccountId
-                        }))
-                        : []
+            return {
+                schemaVersion: CURRENT_SCHEMA_VERSION,
+                accounts,
+                transfers: Array.isArray(parsedData.transfers)
+                    ? parsedData.transfers
+                    : [],
+                transactions: Array.isArray(parsedData.transactions)
+                    ? parsedData.transactions.map((transaction) => ({
+                          ...transaction,
+                          accountId: transaction.accountId || fallbackAccountId
+                      }))
+                    : [],
+                goals: Array.isArray(parsedData.goals)
+                    ? parsedData.goals.map(normalizeGoal)
+                    : [],
+                contributions: Array.isArray(parsedData.contributions)
+                    ? parsedData.contributions.map((contribution) => ({
+                          ...contribution,
+                          accountId: contribution.accountId || fallbackAccountId
+                      }))
+                    : []
+            };
+        }
+
+        function getFinancialStorageStatusLabel() {
+            if (!financialStorageReady) {
+                return "";
+            }
+
+            if (financialStorageBackend === STORAGE_BACKEND_INDEXEDDB) {
+                return "Хранилище: IndexedDB";
+            }
+
+            if (financialStorageBackend === STORAGE_BACKEND_LOCALSTORAGE) {
+                return "Хранилище: localStorage (резервный режим)";
+            }
+
+            if (financialStorageError) {
+                return "Хранилище: ошибка";
+            }
+
+            return "Хранилище: недоступно";
+        }
+
+        function updateStorageStatusUi() {
+            const versionEl = document.getElementById("appVersionLabel");
+            if (versionEl) {
+                versionEl.textContent = "Версия приложения: 8.0";
+            }
+
+            const statusEl = document.getElementById("storageBackendStatus");
+            if (!statusEl) {
+                return;
+            }
+
+            const label = getFinancialStorageStatusLabel();
+            if (!label) {
+                statusEl.classList.add("hidden");
+                statusEl.textContent = "";
+                return;
+            }
+
+            statusEl.textContent = label;
+            statusEl.classList.remove("hidden");
+        }
+
+        function markApplicationReady() {
+            document.body.classList.remove("app-booting");
+            document.body.classList.add("app-ready");
+
+            const boot = document.getElementById("appBootScreen");
+            if (boot) {
+                boot.classList.add("hidden");
+            }
+
+            updateStorageStatusUi();
+        }
+
+        async function persistSnapshot(snapshot) {
+            if (financialStorageBackend === STORAGE_BACKEND_INDEXEDDB) {
+                if (typeof writeIndexedDbState !== "function") {
+                    throw new Error("IndexedDB writer is unavailable");
+                }
+
+                await writeIndexedDbState(snapshot);
+                return;
+            }
+
+            if (financialStorageBackend === STORAGE_BACKEND_LOCALSTORAGE) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+                return;
+            }
+
+            throw new Error("Financial storage backend is unavailable");
+        }
+
+        function enqueueStatePersist() {
+            const snapshot = cloneStateSnapshot(state);
+
+            persistQueue = persistQueue
+                .catch(() => undefined)
+                .then(async () => {
+                    try {
+                        await persistSnapshot(snapshot);
+                    } catch (error) {
+                        console.error("Ошибка сохранения:", error);
+                        if (typeof showToast === "function") {
+                            showToast(
+                                "Не удалось сохранить данные в браузере.",
+                                "error"
+                            );
+                        }
+                        throw error;
+                    }
                 });
-            } catch (error) {
-                console.error("Ошибка загрузки:", error);
-                showToast("Сохранённые данные повреждены.", "error");
+
+            return persistQueue;
+        }
+
+        function saveState() {
+            return enqueueStatePersist();
+        }
+
+        function setFinancialStorageBackend(value) {
+            financialStorageBackend = value;
+            financialStorageError = null;
+        }
+
+        function getFinancialStorageBackend() {
+            return financialStorageBackend;
+        }
+
+        async function activateIndexedDbBackend(normalizedState, metaPatch) {
+            await writeIndexedDbState(normalizedState);
+            setFinancialStorageBackendMarker(STORAGE_BACKEND_INDEXEDDB);
+
+            if (typeof writeIndexedDbMeta === "function") {
+                await writeIndexedDbMeta({
+                    initializedAt: new Date().toISOString(),
+                    ...metaPatch
+                });
+            }
+
+            financialStorageBackend = STORAGE_BACKEND_INDEXEDDB;
+            financialStorageError = null;
+            replaceState(cloneStateSnapshot(normalizedState));
+        }
+
+        async function loadStateFromLegacyLocalStorage(options = {}) {
+            const { warnFallback = false } = options;
+            const savedData = localStorage.getItem(STORAGE_KEY);
+
+            if (!savedData) {
+                financialStorageBackend = STORAGE_BACKEND_LOCALSTORAGE;
+                financialStorageError = null;
+                if (warnFallback && typeof showToast === "function") {
+                    showToast(
+                        "IndexedDB недоступен. Используется резервное хранение в localStorage.",
+                        "error"
+                    );
+                }
+                return;
+            }
+
+            const parsedData = JSON.parse(savedData);
+            replaceState(normalizeStoredState(parsedData));
+            financialStorageBackend = STORAGE_BACKEND_LOCALSTORAGE;
+            financialStorageError = null;
+
+            if (warnFallback && typeof showToast === "function") {
+                showToast(
+                    "IndexedDB недоступен. Используется резервное хранение в localStorage.",
+                    "error"
+                );
             }
         }
 
-        function commitChanges() {
-            saveState();
-            renderAll();
+        async function migrateLegacyStateToIndexedDb() {
+            const rawLegacy = localStorage.getItem(STORAGE_KEY);
+            ensureMigrationBackup(rawLegacy);
+
+            const parsedData = JSON.parse(rawLegacy);
+            const normalized = normalizeStoredState(parsedData);
+
+            await activateIndexedDbBackend(normalized, {
+                migratedFromLocalStorage: true,
+                migratedAt: new Date().toISOString()
+            });
+        }
+
+        function showStorageFatalError(message) {
+            financialStorageBackend = null;
+            financialStorageError = message;
+            if (typeof showToast === "function") {
+                showToast(message, "error");
+            }
+        }
+
+        async function loadState() {
+            financialStorageReady = false;
+            financialStorageError = null;
+
+            const backendMarker = getFinancialStorageBackendMarker();
+            const indexedDbAvailable =
+                typeof isIndexedDbSupported === "function"
+                    ? isIndexedDbSupported()
+                    : typeof indexedDB !== "undefined";
+
+            let hasIndexedDbState = false;
+            let indexedDbOpenFailed = false;
+            let existingIndexedState = null;
+
+            if (
+                indexedDbAvailable &&
+                typeof openFamilyBudgetDatabase === "function"
+            ) {
+                try {
+                    await openFamilyBudgetDatabase();
+                    existingIndexedState =
+                        typeof readIndexedDbState === "function"
+                            ? await readIndexedDbState()
+                            : null;
+                    hasIndexedDbState = Boolean(existingIndexedState);
+
+                    if (hasIndexedDbState) {
+                        replaceState(normalizeStoredState(existingIndexedState));
+                        financialStorageBackend = STORAGE_BACKEND_INDEXEDDB;
+                        financialStorageError = null;
+
+                        if (backendMarker !== STORAGE_BACKEND_INDEXEDDB) {
+                            setFinancialStorageBackendMarker(
+                                STORAGE_BACKEND_INDEXEDDB
+                            );
+                        }
+
+                        financialStorageReady = true;
+                        updateStorageStatusUi();
+                        return;
+                    }
+                } catch (error) {
+                    console.error("Ошибка открытия IndexedDB:", error);
+                    indexedDbOpenFailed = true;
+                }
+            }
+
+            const hasLegacyState = Boolean(localStorage.getItem(STORAGE_KEY));
+            const plan = resolveFinancialStorageSource({
+                indexedDbAvailable: indexedDbAvailable && !indexedDbOpenFailed,
+                hasIndexedDbState,
+                hasLegacyState,
+                backendMarker
+            });
+
+            try {
+                switch (plan.action) {
+                    case "use-indexeddb":
+                    case "use-indexeddb-empty": {
+                        financialStorageBackend = STORAGE_BACKEND_INDEXEDDB;
+                        financialStorageError = null;
+
+                        if (plan.action === "use-indexeddb-empty") {
+                            const initial = createInitialState();
+                            replaceState(initial);
+                            await writeIndexedDbState(initial);
+                        }
+                        break;
+                    }
+                    case "migrate-legacy": {
+                        await migrateLegacyStateToIndexedDb();
+                        break;
+                    }
+                    case "init-indexeddb-empty": {
+                        await activateIndexedDbBackend(createInitialState(), {
+                            migratedFromLocalStorage: false,
+                            initializedAt: new Date().toISOString()
+                        });
+                        break;
+                    }
+                    case "use-localstorage-fallback":
+                    case "use-localstorage-empty": {
+                        await loadStateFromLegacyLocalStorage({
+                            warnFallback: true
+                        });
+                        break;
+                    }
+                    case "error":
+                    default: {
+                        showStorageFatalError(
+                            "Не удалось открыть хранилище IndexedDB. Перезапустите приложение. Старые данные localStorage не загружены, чтобы не затереть актуальные."
+                        );
+                        break;
+                    }
+                }
+            } catch (error) {
+                console.error("Ошибка загрузки:", error);
+
+                if (plan.action === "migrate-legacy") {
+                    clearFinancialStorageBackendMarker();
+                    try {
+                        await loadStateFromLegacyLocalStorage({
+                            warnFallback: true
+                        });
+                        if (typeof showToast === "function") {
+                            showToast(
+                                "Миграция в IndexedDB не завершена. Данные открыты в резервном режиме.",
+                                "error"
+                            );
+                        }
+                    } catch (legacyError) {
+                        console.error("Ошибка резервной загрузки:", legacyError);
+                        showToast("Сохранённые данные повреждены.", "error");
+                    }
+                } else if (
+                    backendMarker === STORAGE_BACKEND_INDEXEDDB ||
+                    plan.action === "error"
+                ) {
+                    showStorageFatalError(
+                        "Ошибка хранилища IndexedDB. Перезапустите приложение."
+                    );
+                } else {
+                    showToast("Сохранённые данные повреждены.", "error");
+                }
+            }
+
+            financialStorageReady = true;
+            updateStorageStatusUi();
+        }
+
+        function commitChanges(options = {}) {
+            const persistPromise = saveState();
+            if (typeof renderAll === "function") {
+                renderAll();
+            }
+
+            return persistPromise;
+        }
+
+        async function resetFinancialPersistence() {
+            resetState();
+
+            if (typeof clearIndexedDbFinancialState === "function") {
+                try {
+                    await clearIndexedDbFinancialState();
+                } catch (error) {
+                    console.error("Ошибка очистки IndexedDB:", error);
+                }
+            }
+
+            localStorage.removeItem(STORAGE_KEY);
+            clearMigrationBackup();
+
+            const initial = createInitialState();
+            replaceState(initial);
+
+            if (
+                typeof isIndexedDbSupported === "function" &&
+                isIndexedDbSupported() &&
+                typeof writeIndexedDbState === "function"
+            ) {
+                await writeIndexedDbState(initial);
+                setFinancialStorageBackendMarker(STORAGE_BACKEND_INDEXEDDB);
+                financialStorageBackend = STORAGE_BACKEND_INDEXEDDB;
+
+                if (typeof writeIndexedDbMeta === "function") {
+                    await writeIndexedDbMeta({
+                        migratedFromLocalStorage: false,
+                        clearedAt: new Date().toISOString(),
+                        initializedAt: new Date().toISOString()
+                    });
+                }
+            } else {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
+                clearFinancialStorageBackendMarker();
+                financialStorageBackend = STORAGE_BACKEND_LOCALSTORAGE;
+            }
+
+            financialStorageError = null;
+            financialStorageReady = true;
+            updateStorageStatusUi();
         }

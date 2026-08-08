@@ -2019,6 +2019,40 @@
             line-height: 1.4;
         }
 
+        .pwa-install__storage {
+            margin: 0 0 10px;
+            color: var(--text);
+            font-size: 0.86rem;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .app-boot-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 5000;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            color: var(--text-muted);
+            background: var(--background);
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .app-boot-screen.hidden {
+            display: none;
+        }
+
+        body.app-booting .header,
+        body.app-booting main,
+        body.app-booting .mobile-nav,
+        body.app-booting .theme-toggle,
+        body.app-booting .toast-container,
+        body.app-booting .modal {
+            visibility: hidden;
+        }
+
         .pwa-install__status {
             margin: 0 0 10px;
             color: var(--green);

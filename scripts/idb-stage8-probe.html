@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>IndexedDB Stage 8 probe</title>
+</head>
+<body>
+<pre id="out">starting…</pre>
+<script src="../constants.js"></script>
+<script src="../state.js"></script>
+<script src="../money.js"></script>
+<script src="../dates.js"></script>
+<script src="../formatting.js"></script>
+<script src="../calculations.js"></script>
+<script>
+  function showToast() {}
+  function renderAll() {}
+</script>
+<script src="../indexed-db.js"></script>
+<script src="../storage.js"></script>
+<script>
+(async () => {
+  const out = document.getElementById("out");
+  const log = (line) => {
+    out.textContent += "\\n" + line;
+    console.log(line);
+  };
+
+  try {
+    await new Promise((resolve, reject) => {
+      const req = indexedDB.deleteDatabase(FAMILY_BUDGET_DB_NAME);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+      req.onblocked = () => resolve();
+    });
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_MIGRATION_BACKUP_KEY);
+    localStorage.removeItem(STORAGE_BACKEND_KEY);
+
+    const legacyState = {
+      schemaVersion: 2,
+      accounts: [{ id: "default-account", name: "Основной счёт", openingBalance: 0 }],
+      transfers: [],
+      transactions: [
+        {
+          id: "tx-legacy-1",
+          accountId: "default-account",
+          date: "2026-08-08",
+          type: "expense",
+          amount: 10000,
+          category: "Продукты",
+          member: "",
+          comment: "legacy",
+          createdAt: "2026-08-08T10:00:00.000Z"
+        }
+      ],
+      goals: [],
+      contributions: []
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(legacyState));
+
+    await loadState();
+    log("BACKEND " + getFinancialStorageBackend());
+    log("MARKER " + localStorage.getItem(STORAGE_BACKEND_KEY));
+    log("BACKUP " + Boolean(localStorage.getItem(STORAGE_MIGRATION_BACKUP_KEY)));
+    log("TX_COUNT " + state.transactions.length);
+    log("TX_ID " + (state.transactions[0] && state.transactions[0].id));
+
+    const idbState = await readIndexedDbState();
+    log("IDB_TX " + (idbState && idbState.transactions && idbState.transactions[0] && idbState.transactions[0].id));
+
+    state.transactions.push({
+      id: "tx-new-2",
+      accountId: "default-account",
+      date: "2026-08-08",
+      type: "expense",
+      amount: 20000,
+      category: "Продукты",
+      member: "",
+      comment: "new",
+      createdAt: "2026-08-08T11:00:00.000Z"
+    });
+    await commitChanges({ wait: true });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(legacyState));
+
+    resetState();
+    await loadState();
+    log("AFTER_RELOAD_COUNT " + state.transactions.length);
+    log("HAS_NEW " + state.transactions.some((item) => item.id === "tx-new-2"));
+
+    await resetFinancialPersistence();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(legacyState));
+    await loadState();
+    log("AFTER_RESET_COUNT " + state.transactions.length);
+    log("PLAN_EMPTY " + (state.transactions.length === 0));
+
+    const meta = await readIndexedDbMeta();
+    log("META_BACKEND " + (meta && meta.backend));
+    log("DB_OK familyBudgetDB");
+    log("DONE");
+  } catch (error) {
+    log("FAIL " + error.message);
+  }
+})();
+</script>
+</body>
+</html>

@@ -216,3 +216,102 @@ test("reset clearing marker+backup prevents legacy remigration plan", () => {
     assert.equal(plan.action, "use-indexeddb-empty");
     assert.notEqual(plan.action, "migrate-legacy");
 });
+
+test("reset invalidates pending save so stale snapshot cannot win", async () => {
+    const ctx = loadPersistenceHelpers();
+    const writes = [];
+    let releaseFirstWrite;
+    const firstWriteGate = new Promise((resolve) => {
+        releaseFirstWrite = resolve;
+    });
+    let firstWriteStarted = false;
+
+    ctx.setFinancialStorageBackend(ctx.keys.STORAGE_BACKEND_INDEXEDDB);
+    ctx.isIndexedDbSupported = () => true;
+    ctx.clearIndexedDbFinancialState = async () => {
+        writes.push("CLEAR");
+    };
+    ctx.writeIndexedDbMeta = async () => undefined;
+    ctx.writeIndexedDbState = async (snapshot) => {
+        const label =
+            snapshot.transactions.length === 0
+                ? "EMPTY"
+                : snapshot.transactions.map((item) => item.id).join(",");
+
+        if (!firstWriteStarted && label !== "EMPTY") {
+            firstWriteStarted = true;
+            await firstWriteGate;
+        }
+
+        writes.push(label);
+    };
+
+    ctx.replaceState({
+        ...ctx.createInitialState(),
+        transactions: [{ id: "A" }]
+    });
+    const saveA = ctx.enqueueStatePersist();
+    const resetP = ctx.resetFinancialPersistence();
+
+    releaseFirstWrite();
+    await Promise.all([saveA, resetP]);
+    await ctx.flushFinancialPersistenceQueue();
+
+    assert.ok(writes.includes("EMPTY"));
+    assert.equal(writes[writes.length - 1], "EMPTY");
+    assert.ok(!writes.includes("A") || writes.indexOf("A") < writes.indexOf("EMPTY"));
+});
+
+test("save A, save B, reset, save C — final persisted state is C", async () => {
+    const ctx = loadPersistenceHelpers();
+    const writes = [];
+
+    ctx.setFinancialStorageBackend(ctx.keys.STORAGE_BACKEND_INDEXEDDB);
+    ctx.isIndexedDbSupported = () => true;
+    ctx.clearIndexedDbFinancialState = async () => {
+        writes.push("CLEAR");
+    };
+    ctx.writeIndexedDbMeta = async () => undefined;
+    ctx.writeIndexedDbState = async (snapshot) => {
+        writes.push(
+            snapshot.transactions.length === 0
+                ? "EMPTY"
+                : snapshot.transactions.map((item) => item.id).join(",")
+        );
+    };
+
+    ctx.replaceState({
+        ...ctx.createInitialState(),
+        transactions: [{ id: "A" }]
+    });
+    const saveA = ctx.enqueueStatePersist();
+
+    ctx.replaceState({
+        ...ctx.createInitialState(),
+        transactions: [{ id: "A" }, { id: "B" }]
+    });
+    const saveB = ctx.enqueueStatePersist();
+
+    const resetP = ctx.resetFinancialPersistence();
+
+    ctx.replaceState({
+        ...ctx.createInitialState(),
+        transactions: [{ id: "C" }]
+    });
+    const saveC = ctx.enqueueStatePersist();
+
+    await Promise.all([saveA, saveB, resetP, saveC]);
+    await ctx.flushFinancialPersistenceQueue();
+
+    assert.equal(writes[writes.length - 1], "C");
+    assert.ok(writes.includes("EMPTY"));
+
+    const emptyIndex = writes.indexOf("EMPTY");
+    const cIndex = writes.lastIndexOf("C");
+    assert.ok(emptyIndex >= 0 && cIndex > emptyIndex);
+
+    const aAfterEmpty = writes.slice(emptyIndex + 1).includes("A");
+    const bAfterEmpty = writes.slice(emptyIndex + 1).includes("A,B");
+    assert.equal(aAfterEmpty, false);
+    assert.equal(bAfterEmpty, false);
+});

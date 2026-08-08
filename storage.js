@@ -342,6 +342,21 @@
         let financialStorageReady = false;
         let financialStorageError = null;
         let persistQueue = Promise.resolve();
+        let persistEpoch = 0;
+
+        function enqueuePersistenceTask(task) {
+            persistQueue = persistQueue.catch(() => undefined).then(task);
+            return persistQueue;
+        }
+
+        function getPersistEpoch() {
+            return persistEpoch;
+        }
+
+        function bumpPersistEpoch() {
+            persistEpoch += 1;
+            return persistEpoch;
+        }
 
         function cloneStateSnapshot(sourceState) {
             if (typeof structuredClone === "function") {
@@ -559,25 +574,27 @@
 
         function enqueueStatePersist() {
             const snapshot = cloneStateSnapshot(state);
+            const epoch = persistEpoch;
 
-            persistQueue = persistQueue
-                .catch(() => undefined)
-                .then(async () => {
-                    try {
-                        await persistSnapshot(snapshot);
-                    } catch (error) {
-                        console.error("Ошибка сохранения:", error);
-                        if (typeof showToast === "function") {
-                            showToast(
-                                "Не удалось сохранить данные в браузере.",
-                                "error"
-                            );
-                        }
-                        throw error;
+            return enqueuePersistenceTask(async () => {
+                if (epoch !== persistEpoch) {
+                    // A later reset invalidated this snapshot.
+                    return;
+                }
+
+                try {
+                    await persistSnapshot(snapshot);
+                } catch (error) {
+                    console.error("Ошибка сохранения:", error);
+                    if (typeof showToast === "function") {
+                        showToast(
+                            "Не удалось сохранить данные в браузере.",
+                            "error"
+                        );
                     }
-                });
-
-            return persistQueue;
+                    throw error;
+                }
+            });
         }
 
         function saveState() {
@@ -591,6 +608,10 @@
 
         function getFinancialStorageBackend() {
             return financialStorageBackend;
+        }
+
+        async function flushFinancialPersistenceQueue() {
+            await persistQueue.catch(() => undefined);
         }
 
         async function activateIndexedDbBackend(normalizedState, metaPatch) {
@@ -799,45 +820,56 @@
         }
 
         async function resetFinancialPersistence() {
+            // Invalidate every not-yet-started save immediately so stale
+            // snapshots cannot overwrite the empty state after reset.
+            const resetEpoch = bumpPersistEpoch();
+
             resetState();
 
-            if (typeof clearIndexedDbFinancialState === "function") {
-                try {
-                    await clearIndexedDbFinancialState();
-                } catch (error) {
-                    console.error("Ошибка очистки IndexedDB:", error);
+            await enqueuePersistenceTask(async () => {
+                if (resetEpoch !== persistEpoch) {
+                    // A newer reset superseded this one.
+                    return;
                 }
-            }
 
-            localStorage.removeItem(STORAGE_KEY);
-            clearMigrationBackup();
-
-            const initial = createInitialState();
-            replaceState(initial);
-
-            if (
-                typeof isIndexedDbSupported === "function" &&
-                isIndexedDbSupported() &&
-                typeof writeIndexedDbState === "function"
-            ) {
-                await writeIndexedDbState(initial);
-                setFinancialStorageBackendMarker(STORAGE_BACKEND_INDEXEDDB);
-                financialStorageBackend = STORAGE_BACKEND_INDEXEDDB;
-
-                if (typeof writeIndexedDbMeta === "function") {
-                    await writeIndexedDbMeta({
-                        migratedFromLocalStorage: false,
-                        clearedAt: new Date().toISOString(),
-                        initializedAt: new Date().toISOString()
-                    });
+                if (typeof clearIndexedDbFinancialState === "function") {
+                    try {
+                        await clearIndexedDbFinancialState();
+                    } catch (error) {
+                        console.error("Ошибка очистки IndexedDB:", error);
+                    }
                 }
-            } else {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
-                clearFinancialStorageBackendMarker();
-                financialStorageBackend = STORAGE_BACKEND_LOCALSTORAGE;
-            }
 
-            financialStorageError = null;
-            financialStorageReady = true;
-            updateStorageStatusUi();
+                localStorage.removeItem(STORAGE_KEY);
+                clearMigrationBackup();
+
+                const initial = createInitialState();
+                replaceState(initial);
+
+                if (
+                    typeof isIndexedDbSupported === "function" &&
+                    isIndexedDbSupported() &&
+                    typeof writeIndexedDbState === "function"
+                ) {
+                    await writeIndexedDbState(initial);
+                    setFinancialStorageBackendMarker(STORAGE_BACKEND_INDEXEDDB);
+                    financialStorageBackend = STORAGE_BACKEND_INDEXEDDB;
+
+                    if (typeof writeIndexedDbMeta === "function") {
+                        await writeIndexedDbMeta({
+                            migratedFromLocalStorage: false,
+                            clearedAt: new Date().toISOString(),
+                            initializedAt: new Date().toISOString()
+                        });
+                    }
+                } else {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
+                    clearFinancialStorageBackendMarker();
+                    financialStorageBackend = STORAGE_BACKEND_LOCALSTORAGE;
+                }
+
+                financialStorageError = null;
+                financialStorageReady = true;
+                updateStorageStatusUi();
+            });
         }

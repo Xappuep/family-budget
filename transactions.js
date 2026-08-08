@@ -259,18 +259,32 @@
         /**
          * Явные кнопки категорий вместо datalist (на Android datalist
          * уходит в подсказки клавиатуры и не даёт нормальный список).
+         * Не зависит от userAgent / touch / DevTools — только от DOM.
          */
         function renderQuickAddCategories() {
+            const container =
+                elements.quickAddCategories ||
+                document.getElementById("quickAddCategories");
+
+            if (!container) {
+                return;
+            }
+
             if (!elements.quickAddCategories) {
+                elements.quickAddCategories = container;
+            }
+
+            if (typeof QUICK_ADD_CATEGORIES === "undefined") {
                 return;
             }
 
             const type =
                 elements.quickAddType?.value === "income" ? "income" : "expense";
-            const categories = QUICK_ADD_CATEGORIES[type] || QUICK_ADD_CATEGORIES.expense;
+            const categories =
+                QUICK_ADD_CATEGORIES[type] || QUICK_ADD_CATEGORIES.expense || [];
             const selected = String(elements.quickAddCategory?.value || "").trim();
 
-            elements.quickAddCategories.innerHTML = "";
+            container.innerHTML = "";
 
             categories.forEach((category) => {
                 const button = document.createElement("button");
@@ -291,7 +305,7 @@
                     isSelected ? "true" : "false"
                 );
 
-                elements.quickAddCategories.appendChild(button);
+                container.appendChild(button);
             });
         }
 
@@ -417,7 +431,12 @@
             elements.quickAddModal.classList.remove("hidden");
             document.body.style.overflow = "hidden";
 
+            // Fail-safe: контейнер уже в DOM; гарантируем кнопки после открытия sheet.
+            renderQuickAddCategories();
+
             window.requestAnimationFrame(() => {
+                renderQuickAddCategories();
+
                 if (elements.quickAddAmount) {
                     elements.quickAddAmount.focus();
                 }

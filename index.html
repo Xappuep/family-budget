@@ -23,7 +23,13 @@
                     document.documentElement.setAttribute("data-theme", theme);
                 })();
     </script>
-    <link rel="stylesheet" href="styles.css">
+    <!--
+        Asset version (?v=…): единый cache-busting для локальных CSS/JS.
+        При изменении frontend CSS/JS перед публикацией (GitHub Pages и т.п.)
+        обновлять ОДНО и то же значение версии у всех локальных assets ниже.
+        Не использовать случайное значение на каждый запрос.
+    -->
+    <link rel="stylesheet" href="styles.css?v=20260808-2">
 </head>
 
 <body data-mobile-tab="home">
@@ -1204,20 +1210,24 @@
         <span class="theme-toggle__icon" id="themeToggleIcon" aria-hidden="true">☀️</span>
         <span class="theme-toggle__label" id="themeToggleLabel">Светлая</span>
     </button>
-    <script src="constants.js"></script>
-    <script src="state.js"></script>
-    <script src="money.js"></script>
-    <script src="dates.js"></script>
-    <script src="formatting.js"></script>
-    <script src="ui.js"></script>
-    <script src="calculations.js"></script>
-    <script src="storage.js"></script>
-    <script src="accounts.js"></script>
-    <script src="transactions.js"></script>
-    <script src="goals.js"></script>
-    <script src="contributions.js"></script>
-    <script src="analytics.js"></script>
-    <script src="backup.js"></script>
-    <script src="app.js"></script>
+    <!--
+        Локальные скрипты: та же asset version, что у styles.css (?v=20260808-2).
+        Перед публикацией обновлять версию у всех CSS/JS синхронно.
+    -->
+    <script src="constants.js?v=20260808-2"></script>
+    <script src="state.js?v=20260808-2"></script>
+    <script src="money.js?v=20260808-2"></script>
+    <script src="dates.js?v=20260808-2"></script>
+    <script src="formatting.js?v=20260808-2"></script>
+    <script src="ui.js?v=20260808-2"></script>
+    <script src="calculations.js?v=20260808-2"></script>
+    <script src="storage.js?v=20260808-2"></script>
+    <script src="accounts.js?v=20260808-2"></script>
+    <script src="transactions.js?v=20260808-2"></script>
+    <script src="goals.js?v=20260808-2"></script>
+    <script src="contributions.js?v=20260808-2"></script>
+    <script src="analytics.js?v=20260808-2"></script>
+    <script src="backup.js?v=20260808-2"></script>
+    <script src="app.js?v=20260808-2"></script>
 </body>
 </html>

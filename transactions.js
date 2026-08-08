@@ -734,23 +734,7 @@
             const { action, id } = button.dataset;
 
             if (action === "toggle-tx-menu") {
-                const panel = button
-                    .closest(".mobile-tx-card__menu, .mobile-action-menu")
-                    ?.querySelector(
-                        ".mobile-tx-card__menu-panel, .mobile-action-menu__panel"
-                    );
-
-                if (!panel) {
-                    return;
-                }
-
-                const willOpen = panel.classList.contains("hidden");
-                closeMobileActionMenus(null, willOpen ? panel : null);
-                panel.classList.toggle("hidden", !willOpen);
-                button.setAttribute(
-                    "aria-expanded",
-                    willOpen ? "true" : "false"
-                );
+                toggleMobileActionMenu(button);
                 return;
             }
 

@@ -38,21 +38,7 @@
             const menuToggle = event.target.closest("[data-action='toggle-mobile-menu']");
 
             if (menuToggle && elements.accountsGrid.contains(menuToggle)) {
-                const panel = menuToggle
-                    .closest(".mobile-action-menu")
-                    ?.querySelector(".mobile-action-menu__panel");
-
-                if (!panel) {
-                    return;
-                }
-
-                const willOpen = panel.classList.contains("hidden");
-                closeMobileActionMenus(null, willOpen ? panel : null);
-                panel.classList.toggle("hidden", !willOpen);
-                menuToggle.setAttribute(
-                    "aria-expanded",
-                    willOpen ? "true" : "false"
-                );
+                toggleMobileActionMenu(menuToggle);
                 return;
             }
 
@@ -271,21 +257,7 @@
             const { action, id } = button.dataset;
 
             if (action === "toggle-mobile-menu") {
-                const panel = button
-                    .closest(".mobile-action-menu")
-                    ?.querySelector(".mobile-action-menu__panel");
-
-                if (!panel) {
-                    return;
-                }
-
-                const willOpen = panel.classList.contains("hidden");
-                closeMobileActionMenus(null, willOpen ? panel : null);
-                panel.classList.toggle("hidden", !willOpen);
-                button.setAttribute(
-                    "aria-expanded",
-                    willOpen ? "true" : "false"
-                );
+                toggleMobileActionMenu(button);
                 return;
             }
 

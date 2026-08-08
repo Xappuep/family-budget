@@ -361,11 +361,99 @@
             setMobileTab(tab);
         }
 
+        const MOBILE_ACTION_MENU_HOST_SELECTOR =
+            ".goal-card, .mobile-tx-card, .account-card";
+
+        function getMobileActionMenuRoot(fromElement) {
+            return fromElement?.closest(
+                ".mobile-action-menu, .mobile-tx-card__menu"
+            );
+        }
+
+        function getMobileActionMenuPanel(toggle) {
+            return getMobileActionMenuRoot(toggle)?.querySelector(
+                ".mobile-action-menu__panel, .mobile-tx-card__menu-panel"
+            );
+        }
+
+        function getMobileActionMenuHost(panel) {
+            return panel?.closest(MOBILE_ACTION_MENU_HOST_SELECTOR) || null;
+        }
+
+        /**
+         * Открывает меню вверх, если снизу мало места (навигация / край viewport).
+         */
+        function positionMobileActionMenu(panel, toggle) {
+            const menu = getMobileActionMenuRoot(panel);
+
+            if (!menu || !toggle) {
+                return;
+            }
+
+            menu.classList.remove("mobile-action-menu--open-up");
+
+            const toggleRect = toggle.getBoundingClientRect();
+            const panelHeight = Math.max(panel.getBoundingClientRect().height, 96);
+            const mobileNav = document.querySelector(".mobile-nav");
+            const navVisible =
+                mobileNav &&
+                window.getComputedStyle(mobileNav).display !== "none";
+            const navHeight = navVisible
+                ? mobileNav.getBoundingClientRect().height
+                : 0;
+            const spaceBelow =
+                window.innerHeight - toggleRect.bottom - navHeight - 8;
+            const spaceAbove = toggleRect.top - 8;
+
+            if (spaceBelow < panelHeight && spaceAbove > spaceBelow) {
+                menu.classList.add("mobile-action-menu--open-up");
+            }
+        }
+
+        /**
+         * Единый toggle для всех mobile ⋯ меню.
+         * Поднимает карточку-хозяина и выбирает направление открытия.
+         */
+        function toggleMobileActionMenu(toggle) {
+            const panel = getMobileActionMenuPanel(toggle);
+
+            if (!panel) {
+                return false;
+            }
+
+            const willOpen = panel.classList.contains("hidden");
+            closeMobileActionMenus(null, willOpen ? panel : null);
+
+            if (!willOpen) {
+                panel.classList.add("hidden");
+                toggle.setAttribute("aria-expanded", "false");
+                return true;
+            }
+
+            panel.classList.remove("hidden");
+            toggle.setAttribute("aria-expanded", "true");
+
+            const host = getMobileActionMenuHost(panel);
+
+            if (host) {
+                host.classList.add("has-open-menu");
+            }
+
+            positionMobileActionMenu(panel, toggle);
+            return true;
+        }
+
         /**
          * Закрывает мобильные action-меню (цели, вклады, переводы, операции).
          */
         function closeMobileActionMenus(rootOrNull = null, exceptPanel = null) {
             const root = rootOrNull || document;
+            const exceptHost = exceptPanel
+                ? getMobileActionMenuHost(exceptPanel)
+                : null;
+            const exceptMenu = exceptPanel
+                ? getMobileActionMenuRoot(exceptPanel)
+                : null;
 
             root
                 .querySelectorAll(
@@ -385,6 +473,20 @@
 
                     if (toggle) {
                         toggle.setAttribute("aria-expanded", "false");
+                    }
+                });
+
+            root.querySelectorAll(".has-open-menu").forEach((host) => {
+                if (host !== exceptHost) {
+                    host.classList.remove("has-open-menu");
+                }
+            });
+
+            root
+                .querySelectorAll(".mobile-action-menu--open-up")
+                .forEach((menu) => {
+                    if (menu !== exceptMenu) {
+                        menu.classList.remove("mobile-action-menu--open-up");
                     }
                 });
         }

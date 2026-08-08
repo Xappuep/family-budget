@@ -113,6 +113,12 @@
             transactionMonthFilter: document.getElementById("transactionMonthFilter"),
             clearTransactionFilters: document.getElementById("clearTransactionFilters"),
 
+            mobileTransactionsFeed: document.getElementById("mobileTransactionsFeed"),
+            mobileTransactionsList: document.getElementById("mobileTransactionsList"),
+            mobileTransactionsEmpty: document.getElementById("mobileTransactionsEmpty"),
+            mobileTransactionsEmptyTitle: document.getElementById("mobileTransactionsEmptyTitle"),
+            mobileTransactionsEmptyText: document.getElementById("mobileTransactionsEmptyText"),
+
             goalForm: document.getElementById("goalForm"),
             goalFormTitle: document.getElementById("goalFormTitle"),
             goalId: document.getElementById("goalId"),

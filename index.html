@@ -273,11 +273,40 @@
             <div class="section__header">
                 <div>
                     <h2>Доходы и расходы</h2>
-                    <p>Записывайте все поступления и траты семьи.</p>
+                    <p class="desktop-only-copy">Записывайте все поступления и траты семьи.</p>
                 </div>
             </div>
 
-            <form class="card form-card" id="transactionForm">
+            <div class="filters transactions-filters">
+                <input
+                    id="transactionSearch"
+                    type="search"
+                    placeholder="Поиск операций"
+                    aria-label="Поиск операций"
+                >
+
+                <select id="transactionTypeFilter" aria-label="Тип операций">
+                    <option value="all">Все</option>
+                    <option value="expense">Расходы</option>
+                    <option value="income">Доходы</option>
+                </select>
+
+                <input
+                    id="transactionMonthFilter"
+                    type="month"
+                    aria-label="Фильтр по месяцу"
+                >
+
+                <button
+                    class="button button--secondary"
+                    id="clearTransactionFilters"
+                    type="button"
+                >
+                    Сбросить
+                </button>
+            </div>
+
+            <form class="card form-card desktop-transaction-form" id="transactionForm">
                 <h3 id="transactionFormTitle">Добавить операцию</h3>
 
                 <!-- В это поле записывается ID редактируемой операции -->
@@ -381,37 +410,7 @@
                 <div class="form-message" id="transactionMessage"></div>
             </form>
 
-            <div style="height: 16px;"></div>
-
-            <div class="filters">
-                <input
-                    id="transactionSearch"
-                    type="search"
-                    placeholder="Поиск по категории, участнику или комментарию"
-                >
-
-                <select id="transactionTypeFilter">
-                    <option value="all">Все операции</option>
-                    <option value="income">Только доходы</option>
-                    <option value="expense">Только расходы</option>
-                </select>
-
-                <input
-                    id="transactionMonthFilter"
-                    type="month"
-                    aria-label="Фильтр по месяцу"
-                >
-
-                <button
-                    class="button button--secondary"
-                    id="clearTransactionFilters"
-                    type="button"
-                >
-                    Сбросить фильтры
-                </button>
-            </div>
-
-            <div class="card table-card">
+            <div class="card table-card desktop-transactions-table">
                 <div class="table-wrapper">
                     <table>
                         <thead>
@@ -433,8 +432,20 @@
 
                 <div class="empty-state hidden" id="transactionsEmptyState">
                     <div class="empty-state__icon">📋</div>
-                    <strong>Операций пока нет</strong>
-                    Добавьте первый доход или расход.
+                    <strong id="transactionsEmptyTitle">Операций пока нет</strong>
+                    <span id="transactionsEmptyText">Добавьте первый доход или расход.</span>
+                </div>
+            </div>
+
+            <div class="mobile-tx-feed" id="mobileTransactionsFeed" aria-live="polite">
+                <div id="mobileTransactionsList" class="mobile-tx-feed__list"></div>
+                <div class="mobile-tx-empty hidden" id="mobileTransactionsEmpty">
+                    <p class="mobile-tx-empty__title" id="mobileTransactionsEmptyTitle">
+                        Операций пока нет.
+                    </p>
+                    <p class="mobile-tx-empty__text" id="mobileTransactionsEmptyText">
+                        Добавьте доход или расход через кнопку +.
+                    </p>
                 </div>
             </div>
         </section>

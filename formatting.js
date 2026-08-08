@@ -20,3 +20,22 @@ function formatDate(dateString) {
     const [year, month, day] = dateString.split("-").map(Number);
     return new Intl.DateTimeFormat("ru-RU").format(new Date(year, month - 1, day));
 }
+
+/**
+ * Подпись дня для мобильной ленты: Сегодня / Вчера / formatDate.
+ */
+function formatTransactionDayLabel(dateString) {
+    if (!dateString) {
+        return formatDate(dateString);
+    }
+
+    if (dateString === getToday()) {
+        return "Сегодня";
+    }
+
+    if (dateString === getYesterday()) {
+        return "Вчера";
+    }
+
+    return formatDate(dateString);
+}

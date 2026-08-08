@@ -131,6 +131,8 @@
                 return;
             }
 
+            closeMobileTransactionMenus();
+
             if (
                 elements.quickContributionModal &&
                 !elements.quickContributionModal.classList.contains("hidden")
@@ -158,6 +160,19 @@
 
             if (action === "delete-transaction") {
                 deleteTransaction(id);
+            }
+        });
+
+        if (elements.mobileTransactionsList) {
+            elements.mobileTransactionsList.addEventListener(
+                "click",
+                handleMobileTransactionsClick
+            );
+        }
+
+        document.addEventListener("click", (event) => {
+            if (!event.target.closest(".mobile-tx-card__menu")) {
+                closeMobileTransactionMenus();
             }
         });
 

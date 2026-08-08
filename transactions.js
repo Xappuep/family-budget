@@ -152,6 +152,8 @@
                 return;
             }
 
+            closeMobileTransactionMenus();
+
             elements.transactionId.value = transaction.id;
             elements.transactionDate.value = transaction.date;
             elements.transactionType.value = transaction.type;
@@ -165,12 +167,13 @@
                 "Редактировать операцию";
 
             elements.cancelTransactionEdit.classList.remove("hidden");
+            elements.transactionForm.classList.add("is-editing");
 
             showFormMessage(elements.transactionMessage, "");
 
             elements.transactionForm.scrollIntoView({
                 behavior: "smooth",
-                block: "center"
+                block: "start"
             });
         }
 
@@ -217,6 +220,7 @@
             elements.transactionType.value = "expense";
             elements.transactionFormTitle.textContent = "Добавить операцию";
             elements.cancelTransactionEdit.classList.add("hidden");
+            elements.transactionForm.classList.remove("is-editing");
             showFormMessage(elements.transactionMessage, "");
         }
 
@@ -458,11 +462,174 @@
                 .map(({ transaction }) => transaction);
         }
 
+        function getTransactionsEmptyCopy(hasResults) {
+            if (hasResults) {
+                return null;
+            }
+
+            if (state.transactions.length === 0) {
+                return {
+                    title: "Операций пока нет.",
+                    text: "Добавьте доход или расход через кнопку +."
+                };
+            }
+
+            return {
+                title: "По заданным фильтрам операций нет.",
+                text: "Измените поиск или сбросьте фильтры."
+            };
+        }
+
+        function closeMobileTransactionMenus(exceptPanel = null) {
+            if (!elements.mobileTransactionsList) {
+                return;
+            }
+
+            elements.mobileTransactionsList
+                .querySelectorAll(".mobile-tx-card__menu-panel")
+                .forEach((panel) => {
+                    if (panel === exceptPanel) {
+                        return;
+                    }
+
+                    panel.classList.add("hidden");
+                    const toggle = panel
+                        .closest(".mobile-tx-card__menu")
+                        ?.querySelector("[data-action='toggle-tx-menu']");
+
+                    if (toggle) {
+                        toggle.setAttribute("aria-expanded", "false");
+                    }
+                });
+        }
+
+        function buildMobileTransactionCard(transaction) {
+            const isIncome = transaction.type === "income";
+            const amountPrefix = isIncome ? "+" : "−";
+            const accountName =
+                getAccountById(transaction.accountId)?.name || "";
+            const member = String(transaction.member || "").trim();
+            const comment = String(transaction.comment || "").trim();
+            const metaParts = [accountName, member].filter(Boolean);
+
+            const card = document.createElement("article");
+            card.className = "mobile-tx-card";
+            card.dataset.recordId = transaction.id;
+
+            card.innerHTML = `
+                <div class="mobile-tx-card__row">
+                    <div class="mobile-tx-card__body">
+                        <div class="mobile-tx-card__category">
+                            ${escapeHTML(transaction.category || "Без категории")}
+                        </div>
+                        ${
+                            comment
+                                ? `<div class="mobile-tx-card__comment">${escapeHTML(comment)}</div>`
+                                : ""
+                        }
+                        ${
+                            metaParts.length
+                                ? `<div class="mobile-tx-card__meta">${escapeHTML(metaParts.join(" · "))}</div>`
+                                : ""
+                        }
+                    </div>
+                    <div class="mobile-tx-card__aside">
+                        <div class="mobile-tx-card__amount ${
+                            isIncome ? "positive" : "negative"
+                        }">
+                            ${amountPrefix}${escapeHTML(formatMoney(transaction.amount))}
+                        </div>
+                        <div class="mobile-tx-card__menu">
+                            <button
+                                class="mobile-tx-card__menu-toggle"
+                                type="button"
+                                data-action="toggle-tx-menu"
+                                aria-label="Действия с операцией"
+                                aria-haspopup="true"
+                                aria-expanded="false"
+                            >
+                                ⋯
+                            </button>
+                            <div class="mobile-tx-card__menu-panel hidden" role="menu">
+                                <button
+                                    class="mobile-tx-card__menu-item"
+                                    type="button"
+                                    role="menuitem"
+                                    data-action="edit-transaction"
+                                    data-id="${escapeHTML(transaction.id)}"
+                                >
+                                    Редактировать
+                                </button>
+                                <button
+                                    class="mobile-tx-card__menu-item mobile-tx-card__menu-item--danger"
+                                    type="button"
+                                    role="menuitem"
+                                    data-action="delete-transaction"
+                                    data-id="${escapeHTML(transaction.id)}"
+                                >
+                                    Удалить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
         /**
-         * Отрисовывает таблицу доходов и расходов.
+         * Мобильная лента операций (те же отфильтрованные данные, что и таблица).
          */
-        function renderTransactions() {
-            const transactions = getFilteredTransactions();
+        function renderMobileTransactions(transactions) {
+            if (!elements.mobileTransactionsList || !elements.mobileTransactionsEmpty) {
+                return;
+            }
+
+            elements.mobileTransactionsList.innerHTML = "";
+
+            const emptyCopy = getTransactionsEmptyCopy(transactions.length > 0);
+            elements.mobileTransactionsEmpty.classList.toggle(
+                "hidden",
+                !emptyCopy
+            );
+
+            if (emptyCopy) {
+                if (elements.mobileTransactionsEmptyTitle) {
+                    elements.mobileTransactionsEmptyTitle.textContent =
+                        emptyCopy.title;
+                }
+
+                if (elements.mobileTransactionsEmptyText) {
+                    elements.mobileTransactionsEmptyText.textContent =
+                        emptyCopy.text;
+                }
+
+                return;
+            }
+
+            groupTransactionsByDate(transactions).forEach((group) => {
+                const section = document.createElement("section");
+                section.className = "mobile-tx-group";
+                section.setAttribute(
+                    "aria-label",
+                    formatTransactionDayLabel(group.date)
+                );
+
+                const heading = document.createElement("h3");
+                heading.className = "mobile-tx-group__title";
+                heading.textContent = formatTransactionDayLabel(group.date);
+                section.appendChild(heading);
+
+                group.transactions.forEach((transaction) => {
+                    section.appendChild(buildMobileTransactionCard(transaction));
+                });
+
+                elements.mobileTransactionsList.appendChild(section);
+            });
+        }
+
+        function renderDesktopTransactionsTable(transactions) {
             const existingTransactionIds = new Set(
                 [...elements.transactionsTableBody.querySelectorAll("tr[data-record-id]")]
                     .map((row) => row.dataset.recordId)
@@ -470,10 +637,24 @@
 
             elements.transactionsTableBody.innerHTML = "";
 
+            const emptyCopy = getTransactionsEmptyCopy(transactions.length > 0);
             elements.transactionsEmptyState.classList.toggle(
                 "hidden",
-                transactions.length > 0
+                !emptyCopy
             );
+
+            if (emptyCopy) {
+                const title = document.getElementById("transactionsEmptyTitle");
+                const text = document.getElementById("transactionsEmptyText");
+
+                if (title) {
+                    title.textContent = emptyCopy.title.replace(/\.$/, "");
+                }
+
+                if (text) {
+                    text.textContent = emptyCopy.text;
+                }
+            }
 
             transactions.forEach((transaction) => {
                 const row = document.createElement("tr");
@@ -544,6 +725,57 @@
 
                 elements.transactionsTableBody.appendChild(row);
             });
+        }
+
+        /**
+         * Отрисовывает desktop-таблицу и mobile feed из одного списка.
+         */
+        function renderTransactions() {
+            const transactions = getFilteredTransactions();
+            renderDesktopTransactionsTable(transactions);
+            renderMobileTransactions(transactions);
+        }
+
+        function handleMobileTransactionsClick(event) {
+            const button = event.target.closest("[data-action]");
+
+            if (
+                !button ||
+                !elements.mobileTransactionsList ||
+                !elements.mobileTransactionsList.contains(button)
+            ) {
+                return;
+            }
+
+            const { action, id } = button.dataset;
+
+            if (action === "toggle-tx-menu") {
+                const panel = button
+                    .closest(".mobile-tx-card__menu")
+                    ?.querySelector(".mobile-tx-card__menu-panel");
+
+                if (!panel) {
+                    return;
+                }
+
+                const willOpen = panel.classList.contains("hidden");
+                closeMobileTransactionMenus(willOpen ? panel : null);
+                panel.classList.toggle("hidden", !willOpen);
+                button.setAttribute(
+                    "aria-expanded",
+                    willOpen ? "true" : "false"
+                );
+                return;
+            }
+
+            if (action === "edit-transaction") {
+                editTransaction(id);
+                return;
+            }
+
+            if (action === "delete-transaction") {
+                deleteTransaction(id);
+            }
         }
 
         /* =========================================================

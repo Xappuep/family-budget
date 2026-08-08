@@ -11,6 +11,12 @@ function getToday() {
     return getLocalDateString();
 }
 
+function getYesterday() {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return getLocalDateString(yesterday);
+}
+
 function parseUtcDate(dateString) {
     const parts = String(dateString || "").split("-").map(Number);
     if (parts.length !== 3 || parts.some((part) => !Number.isInteger(part))) return null;

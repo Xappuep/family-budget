@@ -515,3 +515,27 @@ test("last used account follows createdAt, not financial date", () => {
     );
     assert.equal(skipsMissing, "card-a");
 });
+
+test("groupTransactionsByDate keeps sorted order within day groups", () => {
+    const context = createHarness();
+    vm.runInContext(`
+        this.groupApi = { groupTransactionsByDate };
+    `, context);
+
+    const source = [
+        { id: "t1", date: "2026-08-08", amount: 300 },
+        { id: "t2", date: "2026-08-08", amount: 200 },
+        { id: "t3", date: "2026-08-07", amount: 100 }
+    ];
+    const snapshot = JSON.stringify(source);
+    const groups = context.groupApi.groupTransactionsByDate(source);
+
+    assert.equal(groups.length, 2);
+    assert.equal(groups[0].date, "2026-08-08");
+    assert.equal(groups[0].transactions.length, 2);
+    assert.equal(groups[0].transactions[0].amount, 300);
+    assert.equal(groups[0].transactions[1].amount, 200);
+    assert.equal(groups[1].date, "2026-08-07");
+    assert.equal(groups[1].transactions[0].amount, 100);
+    assert.equal(JSON.stringify(source), snapshot);
+});

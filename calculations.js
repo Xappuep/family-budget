@@ -333,6 +333,32 @@
             ).transaction.accountId;
         }
 
+        /**
+         * Группирует уже отсортированный список операций по календарной дате.
+         * Не мутирует исходный массив и не меняет порядок внутри групп.
+         * Подпись дня (Сегодня/Вчера) добавляется на уровне UI.
+         */
+        function groupTransactionsByDate(transactions) {
+            const groups = [];
+
+            (transactions || []).forEach((transaction) => {
+                const date = String(transaction?.date || "");
+                const lastGroup = groups[groups.length - 1];
+
+                if (!lastGroup || lastGroup.date !== date) {
+                    groups.push({
+                        date,
+                        transactions: [transaction]
+                    });
+                    return;
+                }
+
+                lastGroup.transactions.push(transaction);
+            });
+
+            return groups;
+        }
+
         function calculateSummary(dateRange = null) {
             const incomeTransactions = state.transactions.filter(
                 (transaction) => transaction.type === "income" && isTransactionInDateRange(transaction, dateRange)

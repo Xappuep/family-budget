@@ -176,8 +176,120 @@
 
             themeToggleButton: document.getElementById("themeToggleButton"),
             themeToggleIcon: document.getElementById("themeToggleIcon"),
-            themeToggleLabel: document.getElementById("themeToggleLabel")
+            themeToggleLabel: document.getElementById("themeToggleLabel"),
+
+            mobileNav: document.getElementById("mobileNav"),
+            mobileExportButton: document.getElementById("mobileExportButton"),
+            mobileImportButton: document.getElementById("mobileImportButton"),
+            mobilePrintButton: document.getElementById("mobilePrintButton"),
+            mobileResetButton: document.getElementById("mobileResetButton"),
+            mobileThemeButton: document.getElementById("mobileThemeButton")
         };
+
+        /** Активная вкладка мобильной оболочки (только runtime, не в state). */
+        let activeMobileTab = "home";
+
+        const MOBILE_TAB_IDS = ["home", "operations", "goals", "more"];
+
+        /**
+         * Обновляет визуальное и a11y-состояние нижней навигации.
+         */
+        function updateMobileNavActiveState(tab) {
+            if (!elements.mobileNav) {
+                return;
+            }
+
+            elements.mobileNav.querySelectorAll("[data-mobile-tab]").forEach((button) => {
+                const buttonTab = button.dataset.mobileTab;
+                const isActive = buttonTab === tab;
+
+                button.classList.toggle("mobile-nav__item--active", isActive);
+
+                if (isActive) {
+                    button.setAttribute("aria-current", "page");
+                } else {
+                    button.removeAttribute("aria-current");
+                }
+            });
+        }
+
+        /**
+         * Переключает мобильный экран без изменения финансовой схемы state.
+         */
+        function setMobileTab(tab, options = {}) {
+            const nextTab = MOBILE_TAB_IDS.includes(tab) ? tab : "home";
+            const { scrollToTop = true } = options;
+
+            activeMobileTab = nextTab;
+            document.body.dataset.mobileTab = nextTab;
+            updateMobileNavActiveState(nextTab);
+
+            if (scrollToTop) {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+        }
+
+        /**
+         * Кнопка «+»: раздел операций → форма → фокус на первое поле.
+         */
+        function openMobileQuickAdd() {
+            setMobileTab("operations", { scrollToTop: false });
+
+            window.requestAnimationFrame(() => {
+                if (elements.transactionForm) {
+                    elements.transactionForm.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start"
+                    });
+                }
+
+                window.setTimeout(() => {
+                    if (elements.transactionDate) {
+                        elements.transactionDate.focus();
+                    }
+                }, 280);
+            });
+        }
+
+        /**
+         * Обработчик нижней мобильной навигации.
+         */
+        function handleMobileNavClick(event) {
+            const button = event.target.closest("[data-mobile-tab]");
+
+            if (!button || !elements.mobileNav.contains(button)) {
+                return;
+            }
+
+            const tab = button.dataset.mobileTab;
+
+            if (tab === "add") {
+                openMobileQuickAdd();
+                return;
+            }
+
+            setMobileTab(tab);
+        }
+
+        /**
+         * Подпись кнопки темы в разделе «Ещё».
+         */
+        function updateMobileThemeButton() {
+            if (!elements.mobileThemeButton) {
+                return;
+            }
+
+            const isDarkTheme = getCurrentTheme() === "dark";
+            elements.mobileThemeButton.textContent = isDarkTheme
+                ? "Включить светлую тему"
+                : "Включить тёмную тему";
+            elements.mobileThemeButton.setAttribute(
+                "aria-label",
+                isDarkTheme
+                    ? "Включить светлую тему"
+                    : "Включить тёмную тему"
+            );
+        }
 
         /* =========================================================
            3. ТЕМА ОФОРМЛЕНИЯ
@@ -213,6 +325,8 @@
                     ? "Включить светлую тему"
                     : "Включить тёмную тему"
             );
+
+            updateMobileThemeButton();
         }
 
         /**

@@ -1154,6 +1154,195 @@
         }
 
         /* =========================================================
+           17b. MOBILE APP SHELL (смартфон ≤620px)
+           ========================================================= */
+
+        .mobile-nav,
+        .mobile-tools-section {
+            display: none;
+        }
+
+        .mobile-nav__label--sr {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 620px) {
+            .brand__subtitle,
+            .header__actions,
+            .navigation,
+            .desktop-only-action,
+            .theme-toggle {
+                display: none !important;
+            }
+
+            .header {
+                padding: 12px 0 8px;
+            }
+
+            .header__content {
+                align-items: center;
+            }
+
+            .brand {
+                align-items: center;
+                gap: 12px;
+            }
+
+            .brand__icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 12px;
+                font-size: 20px;
+            }
+
+            .brand h1 {
+                margin: 0;
+                font-size: 1.25rem;
+                line-height: 1.2;
+            }
+
+            .mobile-nav {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 200;
+                display: grid;
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+                align-items: end;
+                gap: 2px;
+                min-height: 64px;
+                padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+                border-top: 1px solid var(--nav-border-bottom);
+                background: var(--nav-bg);
+                backdrop-filter: blur(16px);
+                box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+            }
+
+            .mobile-nav__item {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 2px;
+                min-height: 48px;
+                min-width: 44px;
+                padding: 4px 2px;
+                border: 0;
+                border-radius: 12px;
+                color: var(--text-muted);
+                background: transparent;
+                font: inherit;
+                font-size: 11px;
+                font-weight: 700;
+                line-height: 1.15;
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .mobile-nav__item:hover,
+            .mobile-nav__item:focus-visible {
+                color: var(--text);
+                outline: none;
+            }
+
+            .mobile-nav__item:focus-visible {
+                box-shadow: 0 0 0 2px var(--focus-ring);
+            }
+
+            .mobile-nav__item--active {
+                color: var(--text);
+                background: var(--surface-subtle);
+            }
+
+            .mobile-nav__item--active::after {
+                content: "";
+                position: absolute;
+                top: 4px;
+                width: 4px;
+                height: 4px;
+                border-radius: 50%;
+                background: var(--orange);
+            }
+
+            .mobile-nav__icon {
+                font-size: 16px;
+                line-height: 1;
+            }
+
+            .mobile-nav__item--add {
+                transform: translateY(-10px);
+            }
+
+            .mobile-nav__add {
+                display: grid;
+                place-items: center;
+                width: 52px;
+                height: 52px;
+                border-radius: 50%;
+                color: #fff;
+                background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+                box-shadow: 0 10px 24px rgba(255, 138, 36, 0.35);
+                font-size: 28px;
+                font-weight: 700;
+                line-height: 1;
+            }
+
+            .mobile-nav__item--add:focus-visible .mobile-nav__add,
+            .mobile-nav__item--add:hover .mobile-nav__add {
+                box-shadow:
+                    0 0 0 2px var(--background),
+                    0 0 0 4px var(--blue),
+                    0 10px 24px rgba(255, 138, 36, 0.35);
+            }
+
+            .mobile-tools-section {
+                display: none;
+            }
+
+            body[data-mobile-tab="home"] .section[data-mobile-screen]:not([data-mobile-screen="home"]),
+            body[data-mobile-tab="operations"] .section[data-mobile-screen]:not([data-mobile-screen="operations"]),
+            body[data-mobile-tab="goals"] .section[data-mobile-screen]:not([data-mobile-screen="goals"]),
+            body[data-mobile-tab="more"] .section[data-mobile-screen]:not([data-mobile-screen="more"]) {
+                display: none !important;
+            }
+
+            body[data-mobile-tab="more"] .mobile-tools-section {
+                display: block;
+            }
+
+            main {
+                padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+            }
+
+            .footer {
+                padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+            }
+
+            .mobile-tools__actions {
+                display: grid;
+                gap: 10px;
+            }
+
+            .mobile-tools__actions .button {
+                width: 100%;
+            }
+
+            .toast-container {
+                bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+            }
+        }
+
+        /* =========================================================
            18. СТИЛИ ДЛЯ ПЕЧАТИ
            ========================================================= */
 
@@ -1171,8 +1360,14 @@
             .goal-card__actions,
             .footer,
             .toast-container,
-            .theme-toggle {
+            .theme-toggle,
+            .mobile-nav,
+            .mobile-tools-section {
                 display: none !important;
+            }
+
+            .section[data-mobile-screen] {
+                display: block !important;
             }
 
             .card {

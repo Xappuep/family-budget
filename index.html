@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
 
-    <!-- Адаптация интерфейса для смартфонов -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Адаптация интерфейса для смартфонов, включая safe-area -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
     <title>Семейный бюджет</title>
 
@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 
-<body>
+<body data-mobile-tab="home">
 
     <!-- =========================================================
          ШАПКА ПРИЛОЖЕНИЯ
@@ -39,7 +39,7 @@
 
                 <div>
                     <h1>Семейный бюджет</h1>
-                    <p>Доходы, расходы, накопления и финансовые цели в одной системе.</p>
+                    <p class="brand__subtitle">Доходы, расходы, накопления и финансовые цели в одной системе.</p>
                 </div>
             </div>
 
@@ -67,8 +67,8 @@
         </div>
     </header>
 
-    <!-- Быстрые ссылки на разделы -->
-    <nav class="navigation">
+    <!-- Быстрые ссылки на разделы (desktop / tablet) -->
+    <nav class="navigation" aria-label="Разделы">
         <div class="container navigation__inner">
             <a class="navigation__link" href="#summary">Сводка</a>
             <a class="navigation__link" href="#transactions">Доходы и расходы</a>
@@ -84,14 +84,14 @@
              СВОДКА
              ===================================================== -->
 
-        <section class="section" id="summary">
+        <section class="section" id="summary" data-mobile-screen="home">
             <div class="section__header">
                 <div>
                     <h2>Финансовая сводка</h2>
                     <p>Общая картина по всем внесённым данным.</p>
                 </div>
 
-                <button class="button button--secondary" id="printButton" type="button">
+                <button class="button button--secondary desktop-only-action" id="printButton" type="button">
                     Распечатать отчёт
                 </button>
             </div>
@@ -178,7 +178,7 @@
              ДОХОДЫ И РАСХОДЫ
              ===================================================== -->
 
-        <section class="section" id="accounts">
+        <section class="section" id="accounts" data-mobile-screen="more">
             <div class="section__header">
                 <div>
                     <h2>&#1057;&#1095;&#1077;&#1090;&#1072; &#1080; &#1087;&#1077;&#1088;&#1077;&#1074;&#1086;&#1076;&#1099;</h2>
@@ -211,7 +211,7 @@
             <div class="accounts-grid" id="accountsGrid"></div>
             <div class="card table-card"><div class="table-wrapper"><table><thead><tr><th>&#1044;&#1072;&#1090;&#1072;</th><th>&#1054;&#1090;&#1082;&#1091;&#1076;&#1072;</th><th>&#1050;&#1091;&#1076;&#1072;</th><th>&#1057;&#1091;&#1084;&#1084;&#1072;</th><th>&#1050;&#1086;&#1084;&#1084;&#1077;&#1085;&#1090;&#1072;&#1088;&#1080;&#1081;</th><th>&#1044;&#1077;&#1081;&#1089;&#1090;&#1074;&#1080;&#1103;</th></tr></thead><tbody id="transfersTableBody"></tbody></table></div><div class="empty-state" id="transfersEmptyState">&#1055;&#1077;&#1088;&#1077;&#1074;&#1086;&#1076;&#1086;&#1074; &#1087;&#1086;&#1082;&#1072; &#1085;&#1077;&#1090;.</div></div>
         </section>
-        <section class="section" id="transactions">
+        <section class="section" id="transactions" data-mobile-screen="operations">
             <div class="section__header">
                 <div>
                     <h2>Доходы и расходы</h2>
@@ -385,7 +385,7 @@
              ФИНАНСОВЫЕ ЦЕЛИ
              ===================================================== -->
 
-        <section class="section" id="goals">
+        <section class="section" id="goals" data-mobile-screen="goals">
             <div class="section__header">
                 <div>
                     <h2>Финансовые цели</h2>
@@ -551,7 +551,7 @@
              ВКЛАДЫ В ФИНАНСОВЫЕ ЦЕЛИ
              ===================================================== -->
 
-        <section class="section" id="contributions">
+        <section class="section" id="contributions" data-mobile-screen="goals">
             <div class="section__header">
                 <div>
                     <h2>История вкладов</h2>
@@ -691,7 +691,7 @@
              АНАЛИТИКА
              ===================================================== -->
 
-        <section class="section" id="analytics">
+        <section class="section" id="analytics" data-mobile-screen="more">
             <div class="section__header">
                 <div>
                     <h2>Аналитика</h2>
@@ -711,7 +711,109 @@
                 </article>
             </div>
         </section>
+
+        <!-- Мобильный раздел «Ещё»: редкие действия без дублирования бизнес-логики -->
+        <section
+            class="section mobile-tools-section"
+            id="mobileTools"
+            data-mobile-screen="more"
+        >
+            <div class="section__header">
+                <div>
+                    <h2>Ещё</h2>
+                    <p>Данные, отчёты и оформление.</p>
+                </div>
+            </div>
+
+            <div class="card form-card mobile-tools-card">
+                <h3>Данные и отчёты</h3>
+                <div class="mobile-tools__actions">
+                    <button class="button button--secondary" id="mobileExportButton" type="button">
+                        Экспорт данных
+                    </button>
+                    <button class="button button--secondary" id="mobileImportButton" type="button">
+                        Импорт данных
+                    </button>
+                    <button class="button button--secondary" id="mobilePrintButton" type="button">
+                        Распечатать отчёт
+                    </button>
+                    <button class="button button--danger" id="mobileResetButton" type="button">
+                        Очистить всё
+                    </button>
+                </div>
+            </div>
+
+            <div style="height: 16px;"></div>
+
+            <div class="card form-card mobile-tools-card">
+                <h3>Оформление</h3>
+                <div class="mobile-tools__actions">
+                    <button
+                        class="button button--secondary"
+                        id="mobileThemeButton"
+                        type="button"
+                        aria-label="Переключить тему оформления"
+                    >
+                        Переключить тему
+                    </button>
+                </div>
+            </div>
+        </section>
     </main>
+
+    <!-- Нижняя навигация смартфона (Этап 1: Mobile App Shell) -->
+    <nav class="mobile-nav" id="mobileNav" aria-label="Мобильная навигация">
+        <button
+            class="mobile-nav__item mobile-nav__item--active"
+            type="button"
+            data-mobile-tab="home"
+            aria-current="page"
+            aria-label="Главная"
+        >
+            <span class="mobile-nav__icon" aria-hidden="true">⌂</span>
+            <span class="mobile-nav__label">Главная</span>
+        </button>
+
+        <button
+            class="mobile-nav__item"
+            type="button"
+            data-mobile-tab="operations"
+            aria-label="Операции"
+        >
+            <span class="mobile-nav__icon" aria-hidden="true">☰</span>
+            <span class="mobile-nav__label">Операции</span>
+        </button>
+
+        <button
+            class="mobile-nav__item mobile-nav__item--add"
+            type="button"
+            data-mobile-tab="add"
+            aria-label="Добавить операцию"
+        >
+            <span class="mobile-nav__add" aria-hidden="true">+</span>
+            <span class="mobile-nav__label mobile-nav__label--sr">Добавить</span>
+        </button>
+
+        <button
+            class="mobile-nav__item"
+            type="button"
+            data-mobile-tab="goals"
+            aria-label="Цели"
+        >
+            <span class="mobile-nav__icon" aria-hidden="true">◎</span>
+            <span class="mobile-nav__label">Цели</span>
+        </button>
+
+        <button
+            class="mobile-nav__item"
+            type="button"
+            data-mobile-tab="more"
+            aria-label="Ещё"
+        >
+            <span class="mobile-nav__icon" aria-hidden="true">⋯</span>
+            <span class="mobile-nav__label">Ещё</span>
+        </button>
+    </nav>
 
     <footer class="footer">
         <div class="container">

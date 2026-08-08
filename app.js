@@ -223,11 +223,44 @@
 
         elements.themeToggleButton.addEventListener("click", toggleTheme);
 
+        if (elements.mobileNav) {
+            elements.mobileNav.addEventListener("click", handleMobileNavClick);
+        }
+
+        if (elements.mobileExportButton) {
+            elements.mobileExportButton.addEventListener("click", () => {
+                elements.exportButton.click();
+            });
+        }
+
+        if (elements.mobileImportButton) {
+            elements.mobileImportButton.addEventListener("click", () => {
+                elements.importButton.click();
+            });
+        }
+
+        if (elements.mobilePrintButton) {
+            elements.mobilePrintButton.addEventListener("click", () => {
+                elements.printButton.click();
+            });
+        }
+
+        if (elements.mobileResetButton) {
+            elements.mobileResetButton.addEventListener("click", () => {
+                elements.resetButton.click();
+            });
+        }
+
+        if (elements.mobileThemeButton) {
+            elements.mobileThemeButton.addEventListener("click", toggleTheme);
+        }
+
         /* =========================================================
            15. ЗАПУСК ПРИЛОЖЕНИЯ
            ========================================================= */
 
         function initializeApplication() {
+            setMobileTab("home", { scrollToTop: false });
             updateThemeToggleButton();
             loadState();
 

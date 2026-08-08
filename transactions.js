@@ -77,6 +77,13 @@
          * Добавляет новую операцию в state и сохраняет изменения.
          */
         function addTransaction(payload) {
+            if (
+                typeof requireFinancialWriteAccess === "function" &&
+                !requireFinancialWriteAccess()
+            ) {
+                return;
+            }
+
             state.transactions.push(createTransactionRecord(payload));
             showToast("Операция добавлена.");
             commitChanges();
@@ -86,6 +93,13 @@
          * Обновляет существующую операцию без изменения createdAt.
          */
         function updateTransaction(editingId, payload) {
+            if (
+                typeof requireFinancialWriteAccess === "function" &&
+                !requireFinancialWriteAccess()
+            ) {
+                return;
+            }
+
             const index = state.transactions.findIndex(
                 (transaction) => transaction.id === editingId
             );
@@ -181,6 +195,13 @@
          * Удаляет операцию после подтверждения.
          */
         function deleteTransaction(transactionId) {
+            if (
+                typeof requireFinancialWriteAccess === "function" &&
+                !requireFinancialWriteAccess()
+            ) {
+                return;
+            }
+
             const transaction = state.transactions.find(
                 (item) => item.id === transactionId
             );

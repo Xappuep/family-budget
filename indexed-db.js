@@ -194,10 +194,32 @@ async function writeIndexedDbMeta(metaPatch) {
     return next;
 }
 
+async function readIndexedDbMetaByKey(key) {
+    const db = await openFamilyBudgetDatabase();
+    const transaction = db.transaction("meta", "readonly");
+    const store = transaction.objectStore("meta");
+    const record = await requestToPromise(store.get(key));
+    await transactionDone(transaction);
+    return record || null;
+}
+
+async function writeIndexedDbMetaByKey(record) {
+    if (!record || typeof record !== "object" || !record.key) {
+        throw new Error("IndexedDB meta record requires a key");
+    }
+
+    const db = await openFamilyBudgetDatabase();
+    const transaction = db.transaction("meta", "readwrite");
+    transaction.objectStore("meta").put(record);
+    await transactionDone(transaction);
+    return record;
+}
+
 async function clearIndexedDbFinancialState() {
     const db = await openFamilyBudgetDatabase();
     const transaction = db.transaction(["appState", "meta"], "readwrite");
     transaction.objectStore("appState").delete(FAMILY_BUDGET_APP_STATE_KEY);
+    // Only financial storage meta — never delete access/license metadata.
     transaction.objectStore("meta").delete(FAMILY_BUDGET_META_KEY);
     await transactionDone(transaction);
 }

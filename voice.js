@@ -635,6 +635,13 @@ function abortVoiceRecognition() {
 }
 
 function startVoiceRecognition() {
+    if (
+        typeof requireFinancialWriteAccess === "function" &&
+        !requireFinancialWriteAccess()
+    ) {
+        return;
+    }
+
     if (!isSpeechRecognitionSupported()) {
         setVoiceUnsupportedState();
         showVoiceError(

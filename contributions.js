@@ -3,6 +3,13 @@
         function handleContributionSubmit(event) {
             event.preventDefault();
 
+            if (
+                typeof requireFinancialWriteAccess === "function" &&
+                !requireFinancialWriteAccess()
+            ) {
+                return;
+            }
+
             const goalId = elements.contributionGoal.value;
             const accountId = elements.contributionAccount.value;
             const amount = rublesToMinor(elements.contributionAmount.value);
@@ -118,6 +125,13 @@
         }
 
         function deleteContribution(contributionId) {
+            if (
+                typeof requireFinancialWriteAccess === "function" &&
+                !requireFinancialWriteAccess()
+            ) {
+                return;
+            }
+
             const contribution = state.contributions.find(
                 (item) => item.id === contributionId
             );
@@ -552,6 +566,13 @@
 
         function handleQuickContributionSubmit(event) {
             event.preventDefault();
+
+            if (
+                typeof requireFinancialWriteAccess === "function" &&
+                !requireFinancialWriteAccess()
+            ) {
+                return;
+            }
 
             const goalId = elements.quickContributionGoalId.value;
             const accountId = elements.quickContributionAccount.value;

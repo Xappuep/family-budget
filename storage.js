@@ -523,7 +523,8 @@
         function updateStorageStatusUi() {
             const versionEl = document.getElementById("appVersionLabel");
             if (versionEl) {
-                versionEl.textContent = "Версия приложения: 8.0.1";
+                versionEl.textContent =
+                    "Версия приложения: " + APP_DISPLAY_VERSION;
             }
 
             const statusEl = document.getElementById("storageBackendStatus");
@@ -820,6 +821,9 @@
         }
 
         async function resetFinancialPersistence() {
+            // Clears financial appState + storage meta only.
+            // Access/license metadata (meta key "access" / localStorage ACCESS_STORAGE_KEY)
+            // is intentionally NOT cleared — trial and license survive reset.
             // Invalidate every not-yet-started save immediately so stale
             // snapshots cannot overwrite the empty state after reset.
             const resetEpoch = bumpPersistEpoch();

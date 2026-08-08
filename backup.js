@@ -1,6 +1,14 @@
 "use strict";
 
         function exportData() {
+            const confirmed = window.confirm(
+                "Экспортируемый файл может содержать личную финансовую информацию и не шифруется. Создать резервную копию?"
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
             const exportObject = {
                 application: "Семейный бюджет",
                 version: CURRENT_SCHEMA_VERSION,
@@ -36,6 +44,31 @@
          * Читает выбранный JSON-файл и заменяет текущие данные.
          */
         function importData(event) {
+            if (
+                typeof hasFinancialWriteAccess === "function" &&
+                !hasFinancialWriteAccess()
+            ) {
+                if (typeof showToast === "function") {
+                    showToast(
+                        "Импорт изменяет финансовые данные и доступен после активации приложения.",
+                        "error"
+                    );
+                }
+
+                if (typeof renderAccessStatus === "function") {
+                    renderAccessStatus();
+                }
+
+                if (typeof applyAccessModeToUi === "function") {
+                    applyAccessModeToUi();
+                }
+
+                if (elements.importFileInput) {
+                    elements.importFileInput.value = "";
+                }
+                return;
+            }
+
             const file = event.target.files?.[0];
 
             if (!file) {
@@ -122,8 +155,8 @@ const confirmed = window.confirm(
 
         async function resetAllData() {
             const confirmed = window.confirm(
-                "Удалить все операции, финансовые цели и вклады? " +
-                "Это действие нельзя отменить."
+                "Удалить все финансовые данные (счета, операции, цели, вклады) и голосовые привычки? " +
+                "Пробный период и лицензия НЕ сбрасываются. Это действие нельзя отменить."
             );
 
             if (!confirmed) {

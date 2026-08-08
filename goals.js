@@ -5,6 +5,13 @@ const goalAmountSnapshot = new Map();
         function handleGoalSubmit(event) {
             event.preventDefault();
 
+            if (
+                typeof requireFinancialWriteAccess === "function" &&
+                !requireFinancialWriteAccess()
+            ) {
+                return;
+            }
+
             const type = elements.goalType.value === GOAL_TYPE.CREDIT
                 ? GOAL_TYPE.CREDIT
                 : GOAL_TYPE.DEPOSIT;
@@ -239,6 +246,13 @@ const goalAmountSnapshot = new Map();
         }
 
         function deleteGoal(goalId) {
+            if (
+                typeof requireFinancialWriteAccess === "function" &&
+                !requireFinancialWriteAccess()
+            ) {
+                return;
+            }
+
             const goal = getGoalById(goalId);
 
             if (!goal) {

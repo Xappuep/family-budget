@@ -133,6 +133,12 @@ function closeMobileTransferForm() {
 
 function handleAccountSubmit(event) {
     event.preventDefault();
+    if (
+        typeof requireFinancialWriteAccess === "function" &&
+        !requireFinancialWriteAccess()
+    ) {
+        return;
+    }
     const name = elements.accountName.value.trim();
     const openingBalance = rublesToMinor(elements.accountOpeningBalance.value);
     if (!name || !Number.isFinite(openingBalance)) {
@@ -150,6 +156,12 @@ function handleAccountSubmit(event) {
 
 function handleTransferSubmit(event) {
     event.preventDefault();
+    if (
+        typeof requireFinancialWriteAccess === "function" &&
+        !requireFinancialWriteAccess()
+    ) {
+        return;
+    }
     const fromAccountId = elements.transferFrom.value;
     const toAccountId = elements.transferTo.value;
     const amount = rublesToMinor(elements.transferAmount.value);
@@ -179,6 +191,12 @@ function handleTransferSubmit(event) {
 }
 
 function deleteAccount(accountId) {
+    if (
+        typeof requireFinancialWriteAccess === "function" &&
+        !requireFinancialWriteAccess()
+    ) {
+        return;
+    }
     const used = state.transactions.some((item) => item.accountId === accountId)
         || state.transfers.some((item) => item.fromAccountId === accountId || item.toAccountId === accountId)
         || state.contributions.some((item) => item.accountId === accountId);
@@ -196,6 +214,12 @@ function deleteAccount(accountId) {
 }
 
 function deleteTransfer(transferId) {
+    if (
+        typeof requireFinancialWriteAccess === "function" &&
+        !requireFinancialWriteAccess()
+    ) {
+        return;
+    }
     if (!window.confirm("Удалить перевод?")) return;
     state.transfers = state.transfers.filter((transfer) => transfer.id !== transferId);
     commitChanges();

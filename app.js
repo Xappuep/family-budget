@@ -504,6 +504,14 @@
                 }
             }
 
+            if (typeof initializeAccessControl === "function") {
+                try {
+                    await initializeAccessControl();
+                } catch (error) {
+                    console.error("Ошибка инициализации доступа:", error);
+                }
+            }
+
             resetTransactionForm();
             resetGoalForm();
             resetContributionForm();
@@ -516,7 +524,17 @@
                 initPwa();
             }
 
+            if (typeof initAccessUi === "function") {
+                initAccessUi();
+            }
+
             renderAll();
+            if (typeof renderAccessStatus === "function") {
+                renderAccessStatus();
+            }
+            if (typeof applyAccessModeToUi === "function") {
+                applyAccessModeToUi();
+            }
 
             if (typeof markApplicationReady === "function") {
                 markApplicationReady();

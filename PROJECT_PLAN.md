@@ -358,7 +358,7 @@ AI API на данном этапе не использовать.
 
 Пользовательская проверка на физическом Android успешно подтвердила: install через Chrome, standalone, запуск с иконки, offline app shell, операции online/offline, сохранение localStorage, controlled PWA update (включая обновление до PWA 7.1) и сохранность данных после обновления.
 
-### Этап 8. IndexedDB — IN PROGRESS
+### Этап 8. IndexedDB — DONE
 
 После стабилизации интерфейса рассмотреть миграцию основного хранения:
 
@@ -375,7 +375,74 @@ localStorage → IndexedDB.
 
 Нельзя потерять существующие пользовательские данные.
 
-IndexedDB primary persistence и автоматическая миграция legacy localStorage реализованы. Физическая проверка Android успешно подтвердила миграцию, persistence, offline, import/export и reset. Устранён race pending save vs reset. Ожидает финального закрытия этапа владельцем проекта.
+Пользовательская проверка на физическом Android успешно подтвердила:
+
+* автоматическую миграцию legacy localStorage → IndexedDB;
+* сохранность существующих данных после миграции;
+* IndexedDB как primary source of truth;
+* отображение «Хранилище: IndexedDB»;
+* обычные новые операции;
+* быстрые последовательные записи;
+* persistence queue;
+* закрытие и повторный запуск PWA;
+* работу IndexedDB offline;
+* сохранение offline-операций;
+* export JSON;
+* import JSON;
+* сохранение импортированных данных после перезапуска;
+* reset;
+* отсутствие повторной legacy migration после reset;
+* восстановление из backup;
+* исправление race condition между pending save и reset;
+* физическую проверку race fix: операция 777 ₽ была создана непосредственно перед «Очистить всё», после перезапуска она НЕ восстановилась.
+
+Автоматические тесты после финальной коррекции: 73 pass / 0 fail.
+
+### Архитектурный статус после Этапа 8
+
+Основное финансовое хранилище: IndexedDB.
+
+* Database: `familyBudgetDB`
+* DB version: `1`
+* Stores: `appState`, `meta`
+
+Runtime business logic продолжает работать через единый `state`.
+
+Theme: localStorage.
+
+Voice habits: localStorage.
+
+Приложение остаётся:
+
+* local-first;
+* offline-capable;
+* без backend;
+* без обязательной регистрации;
+* без облачной БД.
+
+### Этап 8.1. Trial / Access Control / Promo / Legal — IN PROGRESS
+
+Цель Version 8.1:
+
+* локальный пробный период 7 × 24 часа с первого запуска 8.1;
+* soft licensing (не DRM): промокод / owner activation через SHA-256 hash;
+* после истечения trial — read-only для финансовых изменений, данные сохраняются;
+* блоки Access / Promo / Legal во вкладке «Ещё» и на desktop;
+* export с предупреждением о незашифрованном JSON;
+* reset финансовых данных не сбрасывает trial/license.
+
+Известные ограничения local-only архитектуры:
+
+* полная очистка site data браузера может начать новый trial;
+* клиентский код можно обойти вручную — это soft licensing;
+* будущие theme packs через entitlements пока не реализуются (только CSS-переменные позже, без theme store сейчас).
+
+Не входит:
+
+* Этап 9 / sync;
+* backend;
+* платные API / AI API;
+* store тем оформления.
 
 ### Этап 9. Синхронизация нескольких устройств — OPTIONAL
 
@@ -459,4 +526,5 @@ IndexedDB primary persistence и автоматическая миграция l
 | 2026-08-08 | Этап 6 | Voice Input v1 | Пользовательская проверка на Android успешно завершена |
 | 2026-08-08 | Этап 6.1 | Локальный словарь голосовых привычек; UX: learning prompt рядом с Category | Пользовательская проверка на Android успешно завершена |
 | 2026-08-08 | Этап 7 | PWA: manifest, icons, SW, install UX, offline shell, controlled update | Пользовательская проверка на Android успешно завершена |
-| 2026-08-08 | Этап 8 | IndexedDB primary persistence + auto migration from legacy localStorage | Ожидает проверки на физическом Android. Этап 9 не выполнялся |
+| 2026-08-08 | Этап 8 | IndexedDB primary persistence + auto migration from legacy localStorage; race fix pending save vs reset | Пользовательская проверка на Android успешно завершена. `npm test` — 73/73. Этап 9 не выполнялся |
+| 2026-08-09 | Этап 8.1 | Trial / access control / promo / legal: write guards, More+desktop access UI, export warning, reset preserves license | IN PROGRESS — Этап 9 не выполняется |

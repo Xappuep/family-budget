@@ -248,7 +248,20 @@
             mobileImportButton: document.getElementById("mobileImportButton"),
             mobilePrintButton: document.getElementById("mobilePrintButton"),
             mobileResetButton: document.getElementById("mobileResetButton"),
-            mobileThemeButton: document.getElementById("mobileThemeButton")
+            mobileThemeButton: document.getElementById("mobileThemeButton"),
+
+            accessPanel: document.getElementById("accessPanel"),
+            accessStatusText: document.getElementById("accessStatusText"),
+            accessRemainingText: document.getElementById("accessRemainingText"),
+            accessExpiredBanner: document.getElementById("accessExpiredBanner"),
+            accessActivateScrollButton: document.getElementById(
+                "accessActivateScrollButton"
+            ),
+            promoPanel: document.getElementById("promoPanel"),
+            promoCodeInput: document.getElementById("promoCodeInput"),
+            promoActivateButton: document.getElementById("promoActivateButton"),
+            promoMessage: document.getElementById("promoMessage"),
+            legalPanel: document.getElementById("legalPanel")
         };
 
         /** Активная вкладка мобильной оболочки (только runtime, не в state). */
@@ -362,6 +375,13 @@
          * Центральная кнопка «+»: открывает Quick Add bottom sheet.
          */
         function openMobileQuickAdd() {
+            if (
+                typeof requireFinancialWriteAccess === "function" &&
+                !requireFinancialWriteAccess()
+            ) {
+                return;
+            }
+
             openQuickAddSheet({ focusAmount: false });
         }
 

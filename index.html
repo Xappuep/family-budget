@@ -46,7 +46,7 @@
         Не использовать случайное значение на каждый запрос.
         Должна совпадать с RELEASE / CACHE_NAME в service-worker.js.
     -->
-    <link rel="stylesheet" href="styles.css?v=20260808-11">
+    <link rel="stylesheet" href="styles.css?v=20260809-1">
 </head>
 
 <body data-mobile-tab="home" class="app-booting">
@@ -89,6 +89,11 @@
                     type="file"
                     accept=".json,application/json"
                 >
+
+                <p class="backup-export-note">
+                    Резервная копия содержит данные в незашифрованном JSON-файле.
+                    Храните её в защищённом месте.
+                </p>
             </div>
         </div>
     </header>
@@ -101,6 +106,7 @@
             <a class="navigation__link" href="#goals">Финансовые цели</a>
             <a class="navigation__link" href="#contributions">Вклады</a>
             <a class="navigation__link" href="#analytics">Аналитика</a>
+            <a class="navigation__link" href="#accessSettings">Доступ и правовая информация</a>
         </div>
     </nav>
 
@@ -894,6 +900,10 @@
 
             <div class="card form-card mobile-tools-card">
                 <h3>Данные и отчёты</h3>
+                <p class="backup-export-note">
+                    Резервная копия содержит данные в незашифрованном JSON-файле.
+                    Храните её в защищённом месте.
+                </p>
                 <div class="mobile-tools__actions">
                     <button class="button button--secondary" id="mobileExportButton" type="button">
                         Экспорт данных
@@ -937,12 +947,277 @@
                 </div>
             </div>
 
+
+        </section>
+
+        <section
+            class="section access-settings-section"
+            id="accessSettings"
+            data-mobile-screen="more"
+        >
+            <div class="section__header desktop-access-header">
+                <div>
+                    <h2>Доступ и правовая информация</h2>
+                    <p>Статус пробного периода, активация и юридические сведения.</p>
+                </div>
+            </div>
             <div style="height: 16px;"></div>
 
+            <div class="card form-card access-settings-card" id="accessPanel">
+                <h3>Доступ к приложению</h3>
+                <p class="access-panel__status" id="accessStatusText">
+                    Пробная версия
+                </p>
+                <p class="access-panel__remaining" id="accessRemainingText">
+                    Осталось: —
+                </p>
+                <div
+                    class="access-expired-banner hidden"
+                    id="accessExpiredBanner"
+                    role="status"
+                >
+                    <strong>Пробный период завершён</strong>
+                    <p>
+                        Ваши данные сохранены на устройстве.
+                        Доступен просмотр, экспорт и удаление данных.
+                    </p>
+                    <button
+                        class="button button--primary"
+                        id="accessActivateScrollButton"
+                        type="button"
+                    >
+                        Активировать
+                    </button>
+                </div>
+            </div>
+
+            <div style="height: 16px;"></div>
+
+            <div class="card form-card access-settings-card" id="promoPanel">
+                <h3>Промокод</h3>
+                <p class="access-panel__hint">
+                    Промокоды могут предоставлять доступ к приложению,
+                    дополнительным функциям или темам оформления.
+                </p>
+                <div class="field">
+                    <label for="promoCodeInput">Промокод или код активации</label>
+                    <input
+                        id="promoCodeInput"
+                        type="text"
+                        maxlength="80"
+                        autocomplete="off"
+                        spellcheck="false"
+                        inputmode="text"
+                    >
+                </div>
+                <div class="mobile-tools__actions">
+                    <button
+                        class="button button--primary"
+                        id="promoActivateButton"
+                        type="button"
+                    >
+                        Активировать
+                    </button>
+                </div>
+                <p class="form-message" id="promoMessage" aria-live="polite"></p>
+            </div>
+
+            <div style="height: 16px;"></div>
+
+            <div class="card form-card access-settings-card" id="legalPanel">
+                <h3>Правовая информация</h3>
+                <div class="legal-accordion">
+                    <details class="legal-details" id="legalCopyright">
+                        <summary>О приложении и правообладателе</summary>
+                        <div class="legal-details__body">
+                            <p><strong>Семейный бюджет</strong></p>
+                            <p>© 2026 Михаил Потолинский. Все права защищены.</p>
+                            <p>
+                                Программа для ЭВМ, её программный код, оригинальные тексты,
+                                графические элементы, конкретное визуальное оформление
+                                и иные охраняемые элементы приложения являются результатами
+                                интеллектуальной деятельности и охраняются законодательством
+                                об интеллектуальной собственности.
+                            </p>
+                            <p>
+                                Публикация приложения не означает предоставление права
+                                на его копирование, распространение, модификацию,
+                                перепродажу или иное использование за пределами прав,
+                                прямо предоставленных правообладателем,
+                                настоящими условиями, применимым законодательством
+                                или условиями используемой платформы размещения.
+                            </p>
+                            <p class="legal-details__version">
+                                Версия правовой информации: 09.08.2026 / v1
+                            </p>
+                        </div>
+                    </details>
+
+                    <details class="legal-details" id="legalPrivacy">
+                        <summary>Конфиденциальность</summary>
+                        <div class="legal-details__body">
+                            <p>
+                                «Семейный бюджет» работает преимущественно локально.
+                            </p>
+                            <p>
+                                Финансовые сведения, которые пользователь вводит
+                                в приложение, включая операции, счета, цели,
+                                вклады, кредиты и комментарии, при штатной работе
+                                сохраняются в локальном хранилище браузера/устройства
+                                (IndexedDB).
+                            </p>
+                            <p>
+                                Приложение не требует регистрации пользователя.
+                            </p>
+                            <p>
+                                Разработчик приложения при штатной работе
+                                не получает содержимое локальной базы семейного бюджета.
+                            </p>
+                            <p>
+                                Техническая информация trial/license
+                                также хранится локально на устройстве.
+                            </p>
+                            <p>
+                                Приложение размещается с использованием GitHub Pages.
+                                В соответствии с документацией GitHub при посещении
+                                GitHub Pages IP-адрес посетителя регистрируется
+                                и хранится GitHub в целях безопасности.
+                                Такая техническая обработка осуществляется GitHub
+                                в соответствии с правилами и политикой
+                                конфиденциальности GitHub.
+                            </p>
+                            <p>
+                                Голосовой ввод использует функцию распознавания речи
+                                браузера/операционной системы.
+                                Фактический способ обработки речи зависит от реализации
+                                конкретного браузера и устройства и может быть локальным
+                                либо использовать сервис поставщика браузера/ОС.
+                                Разработчик приложения не получает аудиозапись
+                                через собственный сервер.
+                            </p>
+                            <p>
+                                Экспортируемый JSON-файл резервной копии
+                                не шифруется приложением и может содержать
+                                личную финансовую информацию.
+                            </p>
+                            <p>
+                                Пользователь самостоятельно выбирает место хранения
+                                и способ защиты экспортированной резервной копии.
+                            </p>
+                            <p>Не рекомендуется вводить в приложение:</p>
+                            <ul>
+                                <li>пароли;</li>
+                                <li>PIN-коды;</li>
+                                <li>CVV/CVC;</li>
+                                <li>полные реквизиты банковских карт;</li>
+                                <li>данные документов, удостоверяющих личность;</li>
+                                <li>
+                                    иную секретную информацию,
+                                    которая не требуется для учёта семейного бюджета.
+                                </li>
+                            </ul>
+                        </div>
+                    </details>
+
+                    <details class="legal-details" id="legalTerms">
+                        <summary>Условия использования</summary>
+                        <div class="legal-details__body">
+                            <p>
+                                Приложение предназначено для личного
+                                и семейного учёта финансов.
+                            </p>
+                            <p>
+                                Правообладатель разрешает пользователю использовать приложение
+                                по его функциональному назначению в пределах предоставленного
+                                режима доступа.
+                            </p>
+                            <p>
+                                Начало использования приложения означает ознакомление
+                                пользователя с настоящими Условиями использования.
+                            </p>
+                            <p>
+                                Иные способы использования приложения допускаются
+                                с согласия правообладателя либо в случаях,
+                                прямо предусмотренных применимым законодательством.
+                            </p>
+                            <p>Оно не является:</p>
+                            <ul>
+                                <li>банком;</li>
+                                <li>платёжной системой;</li>
+                                <li>инвестиционным сервисом;</li>
+                                <li>налоговым сервисом;</li>
+                                <li>профессиональной бухгалтерской системой;</li>
+                                <li>индивидуальной финансовой консультацией.</li>
+                            </ul>
+                            <p>
+                                Расчёты носят информационный характер
+                                и зависят от данных, введённых пользователем.
+                            </p>
+                            <p>
+                                Пробный режим предоставляет полный функциональный доступ
+                                на 7 суток с момента первого запуска приложения версии 8.1
+                                в данной установке приложения или профиле браузера.
+                            </p>
+                            <p>
+                                Пробный период не предполагает
+                                автоматического списания денежных средств.
+                            </p>
+                            <p>
+                                После окончания пробного периода
+                                финансовые данные автоматически не удаляются.
+                                Они остаются доступны для просмотра,
+                                экспорта и удаления.
+                            </p>
+                            <p>
+                                Для продолжения изменения финансовых данных
+                                требуется активация доступа.
+                            </p>
+                            <p>
+                                Пользователю рекомендуется регулярно создавать
+                                резервные копии важных данных.
+                            </p>
+                        </div>
+                    </details>
+
+                    <details class="legal-details" id="legalThirdParty">
+                        <summary>Сторонние сервисы и технологии</summary>
+                        <div class="legal-details__body">
+                            <p>
+                                <strong>GitHub Pages</strong> —
+                                используется для размещения и доставки файлов приложения.
+                            </p>
+                            <p>
+                                <strong>Web Speech / SpeechRecognition браузера</strong> —
+                                используется для голосового ввода,
+                                если поддерживается устройством.
+                            </p>
+                            <p>На момент Version 8.1 приложение НЕ использует:</p>
+                            <ul>
+                                <li>рекламные сети;</li>
+                                <li>пользовательскую аналитику разработчика;</li>
+                                <li>AI API;</li>
+                                <li>собственный backend;</li>
+                                <li>облачную финансовую базу;</li>
+                                <li>обязательную регистрацию пользователей.</li>
+                            </ul>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <div style="height: 16px;"></div>
+
+        </section>
+
+        <section
+            class="section mobile-tools-section"
+            id="mobileToolsTail"
+            data-mobile-screen="more"
+        >
             <div class="card form-card mobile-tools-card" id="pwaInstallCard">
                 <h3>Приложение</h3>
                 <p class="pwa-install__version" id="appVersionLabel">
-                    Версия приложения: 8.0.1
+                    Версия приложения: 8.1
                 </p>
                 <p
                     class="pwa-install__storage hidden"
@@ -974,6 +1249,13 @@
 
             <div class="card form-card mobile-tools-card">
                 <h3>Оформление</h3>
+                <p class="access-panel__hint">
+                    Сейчас доступны: Светлая, Тёмная.
+                </p>
+                <p class="access-panel__hint">
+                    Дополнительные темы смогут активироваться промокодами
+                    в будущих версиях.
+                </p>
                 <div class="mobile-tools__actions">
                     <button
                         class="button button--secondary"
@@ -986,6 +1268,7 @@
                 </div>
             </div>
         </section>
+
     </main>
 
     <!-- Нижняя навигация смартфона (Этап 1: Mobile App Shell) -->
@@ -1341,29 +1624,32 @@
         <span class="theme-toggle__label" id="themeToggleLabel">Светлая</span>
     </button>
     <!--
-        Локальные скрипты: та же asset version, что у styles.css (?v=20260808-11).
+        Локальные скрипты: та же asset version, что у styles.css (?v=20260809-1).
         Перед публикацией обновлять версию у всех CSS/JS синхронно.
         RELEASE в service-worker.js должен совпадать.
     -->
-    <script src="constants.js?v=20260808-11"></script>
-    <script src="state.js?v=20260808-11"></script>
-    <script src="money.js?v=20260808-11"></script>
-    <script src="dates.js?v=20260808-11"></script>
-    <script src="formatting.js?v=20260808-11"></script>
-    <script src="ui.js?v=20260808-11"></script>
-    <script src="calculations.js?v=20260808-11"></script>
-    <script src="indexed-db.js?v=20260808-11"></script>
-    <script src="storage.js?v=20260808-11"></script>
-    <script src="accounts.js?v=20260808-11"></script>
-    <script src="transactions.js?v=20260808-11"></script>
-    <script src="voice-parser.js?v=20260808-11"></script>
-    <script src="voice-habits.js?v=20260808-11"></script>
-    <script src="voice.js?v=20260808-11"></script>
-    <script src="goals.js?v=20260808-11"></script>
-    <script src="contributions.js?v=20260808-11"></script>
-    <script src="analytics.js?v=20260808-11"></script>
-    <script src="backup.js?v=20260808-11"></script>
-    <script src="pwa.js?v=20260808-11"></script>
-    <script src="app.js?v=20260808-11"></script>
+    <script src="constants.js?v=20260809-1"></script>
+    <script src="state.js?v=20260809-1"></script>
+    <script src="money.js?v=20260809-1"></script>
+    <script src="dates.js?v=20260809-1"></script>
+    <script src="formatting.js?v=20260809-1"></script>
+    <script src="ui.js?v=20260809-1"></script>
+    <script src="calculations.js?v=20260809-1"></script>
+    <script src="indexed-db.js?v=20260809-1"></script>
+    <script src="storage.js?v=20260809-1"></script>
+    <script src="access-control.js?v=20260809-1"></script>
+    <script src="accounts.js?v=20260809-1"></script>
+    <script src="transactions.js?v=20260809-1"></script>
+    <script src="voice-parser.js?v=20260809-1"></script>
+    <script src="voice-habits.js?v=20260809-1"></script>
+    <script src="voice.js?v=20260809-1"></script>
+    <script src="goals.js?v=20260809-1"></script>
+    <script src="contributions.js?v=20260809-1"></script>
+    <script src="analytics.js?v=20260809-1"></script>
+    <script src="backup.js?v=20260809-1"></script>
+    <script src="access-ui.js?v=20260809-1"></script>
+    <script src="legal.js?v=20260809-1"></script>
+    <script src="pwa.js?v=20260809-1"></script>
+    <script src="app.js?v=20260809-1"></script>
 </body>
 </html>

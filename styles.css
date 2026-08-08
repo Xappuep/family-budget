@@ -2067,6 +2067,152 @@
             line-height: 1.45;
         }
 
+        /* =========================================================
+           14c. Access / Promo / Legal (Version 8.1)
+           ========================================================= */
+
+        .backup-export-note {
+            margin: 0 0 12px;
+            color: var(--text-muted);
+            font-size: 0.84rem;
+            line-height: 1.45;
+            max-width: 36rem;
+        }
+
+        .header__actions .backup-export-note {
+            flex-basis: 100%;
+            margin: 4px 0 0;
+        }
+
+        .access-panel__status {
+            margin: 0 0 6px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .access-panel__remaining,
+        .access-panel__hint {
+            margin: 0 0 12px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .access-expired-banner {
+            margin-top: 12px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 138, 36, 0.45);
+            background: linear-gradient(
+                145deg,
+                rgba(255, 138, 36, 0.16),
+                rgba(40, 135, 255, 0.08)
+            );
+        }
+
+        .access-expired-banner.hidden {
+            display: none;
+        }
+
+        .access-expired-banner strong {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        .access-expired-banner p {
+            margin: 0 0 12px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .access-expired-banner .button,
+        #promoActivateButton,
+        #accessActivateScrollButton {
+            min-height: 44px;
+        }
+
+        .legal-accordion {
+            display: grid;
+            gap: 10px;
+        }
+
+        .legal-details {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--card-light);
+            overflow: hidden;
+        }
+
+        .legal-details summary {
+            cursor: pointer;
+            list-style: none;
+            padding: 14px 16px;
+            min-height: 44px;
+            font-weight: 650;
+            color: var(--text);
+        }
+
+        .legal-details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .legal-details summary::after {
+            content: "+";
+            float: right;
+            color: var(--orange);
+            font-weight: 700;
+        }
+
+        .legal-details[open] summary::after {
+            content: "−";
+        }
+
+        .legal-details__body {
+            padding: 0 16px 14px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .legal-details__body p,
+        .legal-details__body ul {
+            margin: 0 0 10px;
+        }
+
+        .legal-details__body ul {
+            padding-left: 1.2rem;
+        }
+
+        .legal-details__version {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .access-settings-section .access-settings-card {
+            margin-bottom: 16px;
+        }
+
+        body.access-readonly [data-delete-account],
+        body.access-readonly [data-delete-transfer],
+        body.access-readonly [data-action="delete-transfer"],
+        body.access-readonly [data-action="edit-transaction"],
+        body.access-readonly [data-action="delete-transaction"],
+        body.access-readonly [data-action="edit-goal"],
+        body.access-readonly [data-action="delete-goal"],
+        body.access-readonly [data-action="quick-contribution"],
+        body.access-readonly [data-action="edit-contribution"],
+        body.access-readonly [data-action="delete-contribution"] {
+            opacity: 0.45;
+            pointer-events: none;
+        }
+
+        body.access-readonly .mobile-nav__item--add {
+            opacity: 0.55;
+        }
+
         .pwa-update-banner {
             position: fixed;
             left: 12px;
@@ -2462,6 +2608,18 @@
 
             body[data-mobile-tab="more"] .mobile-tools-section {
                 display: block;
+            }
+
+            .access-settings-section {
+                display: none;
+            }
+
+            body[data-mobile-tab="more"] .access-settings-section {
+                display: block;
+            }
+
+            .desktop-access-header {
+                display: none;
             }
 
             main {
@@ -3090,6 +3248,7 @@
             .theme-toggle,
             .mobile-nav,
             .mobile-tools-section,
+            .access-settings-section,
             .mobile-dashboard,
             .quick-add-sheet,
             .mobile-tx-feed,
